@@ -188,7 +188,6 @@ def run():
                 "source": "linkedin",
                 "score": score,
                 "score_breakdown": breakdown,
-                "salary": salary_str,
                 "is_paid": has_compensation(row),
                 "description": desc[:3000] if desc else None
             }
