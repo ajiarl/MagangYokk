@@ -1,12 +1,11 @@
 import { supabase } from "@/lib/supabase"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
-import { Sparkles, Briefcase } from "lucide-react"
+import { Sparkles, Terminal } from "lucide-react"
 
-export const revalidate = 0 // Server render fresh data
+export const revalidate = 0
 
 async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: ApplicationStatus | null })[]> {
-  // 1. Ambil jobs terbaru
   const { data: jobs, error: jobsError } = await supabase
     .from("jobs")
     .select("*")
@@ -14,12 +13,8 @@ async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: A
     .order("scraped_at", { ascending: false })
     .limit(100)
 
-  if (jobsError || !jobs) {
-    console.error("Gagal fetch jobs:", jobsError)
-    return []
-  }
+  if (jobsError || !jobs) return []
 
-  // 2. Ambil data tracking applications untuk di-merge
   const { data: applications } = await supabase
     .from("applications")
     .select("job_id, status")
@@ -54,56 +49,62 @@ export default async function Home() {
   ])
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      {/* Header */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-emerald-600 text-white p-1.5 rounded-lg">
-              <Briefcase className="w-5 h-5" />
+    <div className="min-h-screen bg-[#08090a] text-[#f7f8f8] antialiased selection:bg-[#5e6ad2]/30 selection:text-white">
+      {/* Header Sticky Linear Style */}
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#08090a]/80 backdrop-blur-xl">
+        <div className="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#5e6ad2] flex items-center justify-center text-white shadow-sm shadow-indigo-500/20">
+              <Terminal className="w-3.5 h-3.5 stroke-[2.5]" />
             </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight">MagangYokk</span>
-              <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-mono">
-                MVP v0.2
-              </span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-medium text-sm tracking-tight text-[#f7f8f8]">MagangYokk</span>
+              <span className="text-[10px] font-mono text-[#62666d]">radar.v0.2</span>
             </div>
           </div>
 
           {profile && (
-            <div className="text-right text-xs">
-              <div className="font-semibold text-zinc-800 dark:text-zinc-200">
-                {profile.full_name}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-xs font-medium text-[#d0d6e0]">{profile.full_name}</div>
+                <div className="text-[10px] font-mono text-[#62666d]">
+                  Threshold: {profile.score_threshold}.0+
+                </div>
               </div>
-              <div className="text-[11px] text-zinc-500">
-                Min. Match: {profile.score_threshold}/10
+              <div className="w-7 h-7 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-xs font-mono font-medium text-[#7170ff]">
+                A
               </div>
             </div>
           )}
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        {/* Banner Status Radar */}
-        <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <div className="text-xs">
-              <p className="font-semibold text-emerald-900 dark:text-emerald-300">
-                Radar Magang Otomatis Aktif
-              </p>
-              <p className="text-emerald-700 dark:text-emerald-400">
-                Scoring otomatis via stack utama kamu (Next.js, React, TypeScript, Laravel, Supabase, MySQL).
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-5 py-8 space-y-6">
+        {/* Subtle Ambient Banner */}
+        <div className="relative overflow-hidden rounded-xl border border-white/[0.06] bg-gradient-to-r from-[#0f1011] via-[#141517] to-[#0f1011] p-5 shadow-sm">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Radar Active
+                </span>
+                <span className="text-xs text-[#8a8f98]">LinkedIn Scraper Daemon</span>
+              </div>
+              <p className="text-xs text-[#d0d6e0] max-w-xl leading-relaxed">
+                Menyaring lowongan magang web development secara otomatis berdasarkan kecocokan stack: Next.js, React, TypeScript, Laravel, dan Supabase.
               </p>
             </div>
-          </div>
-          <div className="text-right font-mono text-xs font-bold text-emerald-800 dark:text-emerald-300">
-            {jobsWithApps.length} Lowongan
+
+            <div className="flex items-baseline gap-2 shrink-0">
+              <span className="text-2xl font-mono font-bold text-[#f7f8f8]">{jobsWithApps.length}</span>
+              <span className="text-xs text-[#8a8f98] font-mono">lowongan terindeks</span>
+            </div>
           </div>
         </div>
 
-        {/* Client-side Feed dengan Status Tabs & Actions */}
+        {/* Client Search, Filters, Tabs & Grid */}
         <JobFeedClient initialJobs={jobsWithApps} />
       </main>
     </div>

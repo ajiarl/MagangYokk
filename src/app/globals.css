@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg-marketing: #08090a;
+    --bg-panel: #0f1011;
+    --bg-surface: #141517;
+    --bg-surface-elevated: #191a1b;
+    --text-primary: #f7f8f8;
+    --text-secondary: #d0d6e0;
+    --text-muted: #8a8f98;
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-standard: rgba(255, 255, 255, 0.08);
+    --brand-indigo: #5e6ad2;
+    --brand-violet: #7170ff;
+    --brand-glow: rgba(94, 106, 210, 0.15);
+  }
+
+  body {
+    background-color: var(--bg-marketing);
+    color: var(--text-primary);
+    font-feature-settings: "cv01", "ss03";
+    letter-spacing: -0.011em;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom glassmorphism & borders */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.12);
 }

@@ -101,6 +101,7 @@ RLS aktif di semua tabel. Server-side via service_role bypass RLS.
 
 ## Conventions
 
+- **UI/UX Standard (WAJIB):** Setiap kali menyentuh UI, merancang komponen, atau mengubah styling, WAJIB membaca dan menerapkan prinsip dari skill `design:taste-skill`, `design:ui-ux-pro-max`, dan `design:impeccable` (tersedia dalam bundle `design:ui-ux-mastery`). Dilarang menggunakan styling template AI default, layout simetris membosankan tanpa ritme, atau komponen tanpa state interaktif (hover, active, empty, error). Zero em-dash (`—`) di seluruh antarmuka.
 - **Naming:** camelCase untuk variabel/fungsi, PascalCase untuk komponen dan types
 - **Server Components** (default) untuk semua halaman yang fetch data
 - **Client Components** (`'use client'`) hanya kalau butuh interaktivitas (state, event handler)
