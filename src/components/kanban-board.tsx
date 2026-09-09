@@ -31,30 +31,30 @@ const COLUMNS: ColumnConfig[] = [
   {
     id: "applied",
     title: "Sudah Dilamar",
-    color: "text-[#5e6ad2]",
-    badgeBg: "bg-[#5e6ad2]/10 text-[#7170ff] border-[#5e6ad2]/25",
-    borderHover: "hover:border-[#5e6ad2]/40"
+    color: "text-[#d0d6e0]",
+    badgeBg: "bg-white/[0.06] text-[#d0d6e0] border-white/[0.1]",
+    borderHover: "hover:border-white/25"
   },
   {
     id: "interview",
     title: "Interview",
-    color: "text-amber-400",
-    badgeBg: "bg-amber-500/10 text-amber-300 border-amber-500/25",
-    borderHover: "hover:border-amber-500/40"
+    color: "text-amber-300",
+    badgeBg: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+    borderHover: "hover:border-amber-500/30"
   },
   {
     id: "offered",
-    title: "Penawaran 🎉",
-    color: "text-emerald-400",
-    badgeBg: "bg-emerald-500/10 text-emerald-300 border-emerald-500/25",
-    borderHover: "hover:border-emerald-500/40"
+    title: "Penawaran",
+    color: "text-emerald-300",
+    badgeBg: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
+    borderHover: "hover:border-emerald-500/30"
   },
   {
     id: "rejected",
     title: "Ditolak",
-    color: "text-rose-400",
-    badgeBg: "bg-rose-500/10 text-rose-300 border-rose-500/25",
-    borderHover: "hover:border-rose-500/40"
+    color: "text-rose-300",
+    badgeBg: "bg-rose-500/10 text-rose-300 border-rose-500/20",
+    borderHover: "hover:border-rose-500/30"
   }
 ]
 

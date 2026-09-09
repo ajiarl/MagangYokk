@@ -57,11 +57,11 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#08090a] text-[#f7f8f8] antialiased selection:bg-[#5e6ad2]/30 selection:text-white">
-      {/* Header Sticky Linear Style */}
+      {/* Header Sticky Linear Style - Full Width Fluid Canvas */}
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#08090a]/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-5 h-13 py-3 flex items-center justify-between">
+        <div className="w-full px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-semibold text-sm tracking-tight text-[#f7f8f8]">MagangYokk</span>
+            <span className="font-semibold text-[13px] tracking-tight text-[#f7f8f8]">MagangYokk</span>
             <span className="text-[11px] font-mono text-[#62666d]">/</span>
             <span className="text-xs text-[#8a8f98] font-mono">{jobsWithApps.length} opportunities</span>
           </div>
@@ -77,8 +77,8 @@ export default async function Home() {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-6xl mx-auto px-5 py-6 space-y-6">
+      {/* Main Container - Edge-to-Edge Workspace */}
+      <main className="w-full px-6 py-5">
         {/* Client Search, Filters, Tabs & Grid */}
         <JobFeedClient initialJobs={jobsWithApps} />
       </main>

@@ -13,13 +13,13 @@ const TABS: { id: string; label: string }[] = [
   { id: "saved", label: "Disimpan" },
   { id: "applied", label: "Dilamar" },
   { id: "interview", label: "Interview" },
-  { id: "offered", label: "Offered 🎉" },
+  { id: "offered", label: "Offered" },
   { id: "rejected", label: "Ditolak" }
 ]
 
 export function StatusFilter({ currentFilter, counts, onFilterChange }: StatusFilterProps) {
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+    <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none font-mono text-xs">
       {TABS.map((tab) => {
         const count = counts[tab.id] || 0
         const isActive = currentFilter === tab.id
@@ -28,18 +28,18 @@ export function StatusFilter({ currentFilter, counts, onFilterChange }: StatusFi
           <button
             key={tab.id}
             onClick={() => onFilterChange(tab.id)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap border ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-all whitespace-nowrap border ${
               isActive
-                ? "bg-white/[0.08] text-[#f7f8f8] border-white/[0.15] shadow-sm"
+                ? "bg-white/[0.08] text-white border-white/[0.16] font-medium"
                 : "bg-transparent text-[#8a8f98] hover:text-[#d0d6e0] hover:bg-white/[0.03] border-transparent"
             }`}
           >
             <span>{tab.label}</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+              className={`text-[10px] px-1 py-0.2 rounded ${
                 isActive
-                  ? "bg-[#5e6ad2] text-white"
-                  : "bg-white/[0.05] text-[#62666d]"
+                  ? "bg-white/[0.12] text-white"
+                  : "bg-white/[0.04] text-[#62666d]"
               }`}
             >
               {count}
