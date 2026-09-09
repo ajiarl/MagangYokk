@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobCard } from "@/components/job-card"
+import { KanbanBoard } from "@/components/kanban-board"
 import { StatusFilter } from "@/components/status-filter"
-import { Search, SlidersHorizontal, GraduationCap, Briefcase, Sparkles } from "lucide-react"
+import { Search, SlidersHorizontal, GraduationCap, Briefcase, Sparkles, LayoutGrid, Kanban } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 
 interface JobFeedClientProps {
@@ -14,8 +15,10 @@ interface JobFeedClientProps {
 const TECH_TAGS = ["Next.js", "React", "TypeScript", "Laravel", "Supabase", "MySQL", "PHP"]
 
 type EducationTarget = "all" | "intern" | "freshgrad"
+type ViewMode = "feed" | "kanban"
 
 export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>("feed")
   const [filter, setFilter] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTech, setSelectedTech] = useState<string | null>(null)
@@ -69,7 +72,6 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
     if (isGradKeywords || (!isInternKeywords && (text.includes("junior") || text.includes("entry")))) {
       return "freshgrad"
     }
-    // Default bila mengandung kata intern
     return isInternKeywords ? "intern" : "freshgrad"
   }
 
@@ -95,8 +97,8 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
 
   // Multi-layer filter: Status + Search query + Tech pill + Education Target
   const filteredJobs = jobs.filter((job) => {
-    // 1. Status Filter
-    if (filter !== "all" && job.applicationStatus !== filter) return false
+    // 1. Status Filter (Hanya berlaku di Feed Mode)
+    if (viewMode === "feed" && filter !== "all" && job.applicationStatus !== filter) return false
 
     // 2. Search Filter (Title / Company)
     if (searchQuery.trim()) {
@@ -126,16 +128,46 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
 
   return (
     <div className="space-y-5">
-      {/* Level 1: Target Pendidikan Toggle (Magang Mahasiswa vs Fresh Graduate / Wisuda) */}
+      {/* Top Header Controls: View Mode Switcher + Target Posisi */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#0f1011] rounded-xl border border-white/[0.06]">
+        {/* Left: View Mode Toggle (Feed Cards vs Kanban Board) */}
+        <div className="flex items-center gap-2">
+          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider">Tampilan:</span>
+          <div className="inline-flex rounded-lg bg-[#08090a] p-1 border border-white/[0.06]">
+            <button
+              onClick={() => setViewMode("feed")}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                viewMode === "feed"
+                  ? "bg-[#5e6ad2] text-white shadow-sm font-semibold"
+                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Feed Cards
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                viewMode === "kanban"
+                  ? "bg-[#5e6ad2] text-white shadow-sm font-semibold"
+                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
+              }`}
+            >
+              <Kanban className="w-3.5 h-3.5" />
+              Kanban Board
+            </button>
+          </div>
+        </div>
+
+        {/* Right: Target Pendidikan Segmented Control */}
         <div className="flex items-center gap-2 text-xs font-medium text-[#d0d6e0]">
-          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider">Target Posisi:</span>
+          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider">Target:</span>
           <div className="inline-flex rounded-lg bg-[#08090a] p-1 border border-white/[0.06]">
             <button
               onClick={() => setEduTarget("all")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
                 eduTarget === "all"
-                  ? "bg-[#5e6ad2] text-white shadow-sm font-semibold"
+                  ? "bg-white/[0.08] text-white shadow-sm font-semibold"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
               }`}
             >
@@ -143,32 +175,27 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             </button>
             <button
               onClick={() => setEduTarget("intern")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
                 eduTarget === "intern"
                   ? "bg-emerald-600 text-white shadow-sm font-semibold"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
               }`}
             >
               <Briefcase className="w-3 h-3 text-emerald-300" />
-              Magang Mahasiswa ({internCount})
+              Magang ({internCount})
             </button>
             <button
               onClick={() => setEduTarget("freshgrad")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
                 eduTarget === "freshgrad"
                   ? "bg-amber-600 text-white shadow-sm font-semibold"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
               }`}
             >
               <GraduationCap className="w-3.5 h-3.5 text-amber-200" />
-              Fresh Graduate / Wisuda ({freshgradCount})
+              Fresh Grad ({freshgradCount})
             </button>
           </div>
-        </div>
-
-        <div className="text-[11px] text-[#8a8f98] font-mono hidden md:flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#5e6ad2]" />
-          <span>Filter aktif menyaring {filteredJobs.length} lowongan</span>
         </div>
       </div>
 
@@ -218,31 +245,44 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
         </div>
       </div>
 
-      {/* Tab Filter Status */}
-      <StatusFilter
-        currentFilter={filter}
-        counts={counts}
-        onFilterChange={setFilter}
-      />
-
-      {/* Feed Grid */}
-      {filteredJobs.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-white/[0.08] rounded-2xl p-8 space-y-2 bg-[#0f1011]/40">
-          <p className="text-sm font-medium text-[#d0d6e0]">Tidak ada lowongan yang cocok</p>
-          <p className="text-xs text-[#8a8f98] max-w-sm mx-auto">
-            Coba ganti filter target posisi (Magang Mahasiswa / Fresh Graduate) atau bersihkan kata kunci pencarian.
-          </p>
+      {/* Tampilan View: Kanban Board vs Feed Cards */}
+      {viewMode === "kanban" ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs text-[#8a8f98] px-1 font-mono">
+            <span>Tarik dan geser kartu ke kolom yang diinginkan untuk update status otomatis</span>
+            <span>Total {filteredJobs.length} loker terpantau</span>
+          </div>
+          <KanbanBoard jobs={filteredJobs} onStatusChange={handleStatusChange} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              initialStatus={job.applicationStatus}
-              onStatusChange={(status) => handleStatusChange(job.id, status)}
-            />
-          ))}
+        <div className="space-y-5">
+          {/* Tab Filter Status (Khusus Feed View) */}
+          <StatusFilter
+            currentFilter={filter}
+            counts={counts}
+            onFilterChange={setFilter}
+          />
+
+          {/* Feed Grid */}
+          {filteredJobs.length === 0 ? (
+            <div className="text-center py-20 border border-dashed border-white/[0.08] rounded-2xl p-8 space-y-2 bg-[#0f1011]/40">
+              <p className="text-sm font-medium text-[#d0d6e0]">Tidak ada lowongan yang cocok</p>
+              <p className="text-xs text-[#8a8f98] max-w-sm mx-auto">
+                Coba ganti filter target posisi (Magang Mahasiswa / Fresh Graduate) atau bersihkan kata kunci pencarian.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  initialStatus={job.applicationStatus}
+                  onStatusChange={(status) => handleStatusChange(job.id, status)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
