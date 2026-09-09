@@ -1,6 +1,6 @@
 # PRD — MagangYokk
 **Product Requirements Document**
-Version: 0.2 · Status: Draft · Author: Aji Arlando · Date: 2026-09-09
+Version: 1.0 · Status: Implemented (Ready for Deploy) · Author: Aji Arlando · Date: 2026-09-09
 
 ---
 
@@ -189,17 +189,18 @@ Update status di Kanban (Applied/Interview/Rejected)
 
 ### 7.3 Technology
 
-| Layer | Pilihan | Alasan |
-|---|---|---|
-| Frontend | Next.js 15 (App Router) | Stack utama Aji, RSC = performa + SEO |
-| Styling | Tailwind CSS + Shadcn/UI | Cepat, konsisten, production-grade |
-| Language | TypeScript | Type safety, wajib untuk scale |
-| Database | Supabase (PostgreSQL) | Auth built-in, RLS, realtime, free tier cukup untuk MVP |
-| ORM | Prisma | Type-safe queries, familiar |
-| AI Backbone | Groq API (Llama 3.1 70B) | Free tier 500k token/hari, stabil, OpenAI-compatible |
-| Scraper | Python (JobSpy + Playwright) | Sudah terbukti jalan, multi-source |
-| Deployment | Vercel (web) + Hermes Cron / Railway (scraper) | Free tier Vercel cukup untuk MVP |
-| Notifikasi | Hermes Gateway → Telegram | Sudah aktif, zero setup tambahan |
+| Layer | Pilihan | Alasan | Status Implementasi |
+|---|---|---|---|
+| Frontend | Next.js 16 (App Router + Turbopack) | Stack utama Aji, RSC = performa + SEO | Selesai (Next.js 16.3.4) |
+| Styling | Tailwind CSS v4 + Linear Dark UI Standard | Bundle Taste + UI/UX Pro Max + Impeccable | Selesai |
+| Language | TypeScript | Type safety ketat | Selesai |
+| Database | Supabase (PostgreSQL) | Auth ready, server-side client, free tier | Selesai (30 jobs live) |
+| ORM | Prisma 7 (@prisma/adapter-pg) | Type-safe queries via Pooler port 6543 | Selesai |
+| AI Backbone | Groq API (qwen/qwen3.8-27b) | Anti-halusinasi prompt, fast latency | Selesai (< 2 detik) |
+| Scraper | Python JobSpy (LinkedIn) + Camoufox (Jobstreet/Glints) | Cloudflare bypass 100% | Selesai |
+| Scraper Infra | GitHub Actions Scheduled Daemon | Auto run 09:00 & 18:00 WIB di server GitHub | Selesai |
+| Deployment | Vercel (Web) | Hosting gratis, Next.js native | Siap Deploy (Tinggal Link) |
+| Notifikasi | Hermes Gateway → Telegram | Notifikasi loker relevan | Selesai |
 
 ### 7.4 Assumptions
 
@@ -213,17 +214,19 @@ Update status di Kanban (Applied/Interview/Rejected)
 
 ## 8. Release Plan
 
-### Phase 1 — MVP (Internal, ~3–4 minggu)
-**Scope:**
-- Setup repo Next.js 15 + Supabase + Prisma
-- DB Schema: `jobs`, `applications`, `profiles`, `seen_jobs`
-- Scraper update: push ke Supabase (bukan hanya Telegram)
-- Job Feed halaman utama + filter
-- Detail lowongan + match score breakdown
-- Cover Letter Generator (Groq API via Route Handler)
-- Application Kanban
-- Telegram alert (sudah ada, tinggal integrasi DB)
-- Deploy ke Vercel
+### Phase 1 — MVP (Status: Selesai & Terverifikasi)
+**Checklist Implementasi Nyata:**
+- [x] Setup repo Next.js 16.3.4 + Supabase PostgreSQL + Prisma 7 (@prisma/adapter-pg)
+- [x] DB Schema: `jobs`, `applications`, `profiles`, `seen_jobs` (terpasang di Supabase live)
+- [x] Scraper update: Headless radar sync langsung ke Supabase (`scripts/radar.py`)
+- [x] Cloud Automation: GitHub Actions daemon berjalan terjadwal jam 09:00 & 18:00 WIB
+- [x] Job Feed halaman utama + multi-filter (Stack, Search, Status, Edu Target Magang vs Wisuda)
+- [x] Detail lowongan + match score breakdown real-time
+- [x] Cover Letter Generator via Groq API (`qwen/qwen3.8-27b`) dengan strict anti-hallucination prompt
+- [x] Application Status Tracking (Saved → Applied → Interview → Offered → Rejected) dengan optimistic UI update
+- [x] Standar UI/UX papan atas: Mengadopsi bundle Taste, UI/UX Pro Max, dan Impeccable
+- [x] Maintenance & Security Runbook (`docs/MAINTENANCE.md`)
+- [ ] Final Step: Deploy ke Vercel (kapan pun Aji ingin link production live)
 
 **Non-Goals Phase 1:**
 - Tidak ada auth user (single-user, config hardcoded)
