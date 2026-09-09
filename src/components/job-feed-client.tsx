@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobCard } from "@/components/job-card"
 import { StatusFilter } from "@/components/status-filter"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { Search, SlidersHorizontal, GraduationCap, Briefcase, Sparkles } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 
 interface JobFeedClientProps {
@@ -13,10 +13,13 @@ interface JobFeedClientProps {
 
 const TECH_TAGS = ["Next.js", "React", "TypeScript", "Laravel", "Supabase", "MySQL", "PHP"]
 
+type EducationTarget = "all" | "intern" | "freshgrad"
+
 export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
   const [filter, setFilter] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTech, setSelectedTech] = useState<string | null>(null)
+  const [eduTarget, setEduTarget] = useState<EducationTarget>("all")
 
   const [jobs, setJobs] = useState(initialJobs)
   const [, startTransition] = useTransition()
@@ -37,6 +40,43 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
     })
   }
 
+  // Deteksi target loker: Magang Mahasiswa vs Fresh Graduate / Wisuda
+  function getJobEduCategory(job: Job): "intern" | "freshgrad" {
+    const text = `${job.title} ${job.description || ""}`.toLowerCase()
+    
+    // Tanda kuat magang mahasiswa aktif
+    const isInternKeywords = 
+      text.includes("intern") || 
+      text.includes("magang") || 
+      text.includes("pkl") || 
+      text.includes("student") || 
+      text.includes("mahasiswa") ||
+      text.includes("kuliah")
+
+    // Tanda fresh graduate / wisuda
+    const isGradKeywords = 
+      text.includes("fresh graduate") || 
+      text.includes("freshgrad") || 
+      text.includes("lulusan") || 
+      text.includes("sarjana") || 
+      text.includes("s1") || 
+      text.includes("d3") || 
+      text.includes("bachelor")
+
+    if (isInternKeywords && !isGradKeywords) {
+      return "intern"
+    }
+    if (isGradKeywords || (!isInternKeywords && (text.includes("junior") || text.includes("entry")))) {
+      return "freshgrad"
+    }
+    // Default bila mengandung kata intern
+    return isInternKeywords ? "intern" : "freshgrad"
+  }
+
+  // Hitung counter untuk kategori pendidikan
+  const internCount = jobs.filter((j) => getJobEduCategory(j) === "intern").length
+  const freshgradCount = jobs.filter((j) => getJobEduCategory(j) === "freshgrad").length
+
   // Counter Tab Status
   const counts: Record<string, number> = {
     all: jobs.length,
@@ -53,7 +93,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
     }
   })
 
-  // Multi-layer filter: Status + Search query + Tech pill
+  // Multi-layer filter: Status + Search query + Tech pill + Education Target
   const filteredJobs = jobs.filter((job) => {
     // 1. Status Filter
     if (filter !== "all" && job.applicationStatus !== filter) return false
@@ -75,12 +115,64 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
       if (!inDesc && !inTitle && !inBreakdown) return false
     }
 
+    // 4. Education / Graduation Target Filter
+    if (eduTarget !== "all") {
+      const cat = getJobEduCategory(job)
+      if (cat !== eduTarget) return false
+    }
+
     return true
   })
 
   return (
     <div className="space-y-5">
-      {/* Controls Bar: Search & Tech Chips */}
+      {/* Level 1: Target Pendidikan Toggle (Magang Mahasiswa vs Fresh Graduate / Wisuda) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#0f1011] rounded-xl border border-white/[0.06]">
+        <div className="flex items-center gap-2 text-xs font-medium text-[#d0d6e0]">
+          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider">Target Posisi:</span>
+          <div className="inline-flex rounded-lg bg-[#08090a] p-1 border border-white/[0.06]">
+            <button
+              onClick={() => setEduTarget("all")}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                eduTarget === "all"
+                  ? "bg-[#5e6ad2] text-white shadow-sm font-semibold"
+                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
+              }`}
+            >
+              Semua ({jobs.length})
+            </button>
+            <button
+              onClick={() => setEduTarget("intern")}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                eduTarget === "intern"
+                  ? "bg-emerald-600 text-white shadow-sm font-semibold"
+                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
+              }`}
+            >
+              <Briefcase className="w-3 h-3 text-emerald-300" />
+              Magang Mahasiswa ({internCount})
+            </button>
+            <button
+              onClick={() => setEduTarget("freshgrad")}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
+                eduTarget === "freshgrad"
+                  ? "bg-amber-600 text-white shadow-sm font-semibold"
+                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-amber-200" />
+              Fresh Graduate / Wisuda ({freshgradCount})
+            </button>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-[#8a8f98] font-mono hidden md:flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-[#5e6ad2]" />
+          <span>Filter aktif menyaring {filteredJobs.length} lowongan</span>
+        </div>
+      </div>
+
+      {/* Level 2: Search & Tech Stack Pills */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-[#0f1011] rounded-xl border border-white/[0.06]">
         {/* Search Input */}
         <div className="relative flex-1">
@@ -97,7 +189,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
         {/* Tech Quick Filter */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           <span className="text-[11px] text-[#62666d] font-mono shrink-0 mr-1 flex items-center gap-1">
-            <SlidersHorizontal className="w-3 h-3" /> Filter:
+            <SlidersHorizontal className="w-3 h-3" /> Stack:
           </span>
           {TECH_TAGS.map((tech) => {
             const isSelected = selectedTech === tech
@@ -138,7 +230,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
         <div className="text-center py-20 border border-dashed border-white/[0.08] rounded-2xl p-8 space-y-2 bg-[#0f1011]/40">
           <p className="text-sm font-medium text-[#d0d6e0]">Tidak ada lowongan yang cocok</p>
           <p className="text-xs text-[#8a8f98] max-w-sm mx-auto">
-            Coba bersihkan kata kunci pencarian atau ganti filter status untuk melihat lowongan lain.
+            Coba ganti filter target posisi (Magang Mahasiswa / Fresh Graduate) atau bersihkan kata kunci pencarian.
           </p>
         </div>
       ) : (

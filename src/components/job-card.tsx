@@ -98,8 +98,28 @@ export function JobCard({ job, initialStatus, onStatusChange }: JobCardProps) {
             )}
           </div>
 
-          {/* Badges: Location & Source */}
+          {/* Badges: Location, Source, & Edu Target */}
           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            {/* Edu Target Tag */}
+            {(() => {
+              const text = `${job.title} ${job.description || ""}`.toLowerCase()
+              const isIntern = text.includes("intern") || text.includes("magang") || text.includes("pkl") || text.includes("mahasiswa")
+              const isGrad = text.includes("fresh graduate") || text.includes("sarjana") || text.includes("s1") || text.includes("d3")
+              
+              if (isIntern && !isGrad) {
+                return (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-mono border bg-emerald-500/10 text-emerald-300 border-emerald-500/25">
+                    Magang Mahasiswa
+                  </span>
+                )
+              }
+              return (
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-mono border bg-amber-500/10 text-amber-300 border-amber-500/25">
+                  Fresh Graduate / Wisuda
+                </span>
+              )
+            })()}
+
             <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-mono border ${
               job.is_remote
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
