@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { Sparkles, MapPin, Building2, ExternalLink, Calendar, GripVertical, FileText } from "lucide-react"
+import { Sparkles, MapPin, Building2, ExternalLink, Calendar, GripVertical, FileText, Target } from "lucide-react"
 import { NotesDrawerModal } from "@/components/notes-drawer-modal"
+import { GapAnalysisModal } from "@/components/gap-analysis-modal"
 
 interface KanbanBoardProps {
   jobs: (Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]
@@ -61,6 +62,7 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
   const [draggedJobId, setDraggedJobId] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<ApplicationStatus | null>(null)
   const [activeNotesJob, setActiveNotesJob] = useState<(Job & { applicationNotes?: string | null }) | null>(null)
+  const [activeGapJob, setActiveGapJob] = useState<Job | null>(null)
 
   function handleDragStart(e: React.DragEvent, jobId: string) {
     e.dataTransfer.setData("text/plain", jobId)
@@ -182,6 +184,19 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
                           </span>
 
                           <div className="flex items-center gap-1.5">
+                            {/* Gap Analysis trigger */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActiveGapJob(job)
+                              }}
+                              className="p-1 rounded text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
+                              title="Analisis Kecocokan CV"
+                            >
+                              <Target className="w-3 h-3" />
+                            </button>
+
                             {/* Notes trigger */}
                             <button
                               type="button"
@@ -224,6 +239,17 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
           )
         })}
       </div>
+
+      {/* Modal Gap Analysis for Kanban Card */}
+      {activeGapJob && (
+        <GapAnalysisModal
+          jobId={activeGapJob.id}
+          jobTitle={activeGapJob.title}
+          company={activeGapJob.company}
+          isOpen={!!activeGapJob}
+          onClose={() => setActiveGapJob(null)}
+        />
+      )}
 
       {/* Modal Edit Notes for Kanban Card */}
       {activeNotesJob && (

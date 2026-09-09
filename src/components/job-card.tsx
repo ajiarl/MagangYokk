@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { Sparkles, MapPin, Building2, ExternalLink, Calendar, ChevronDown, Check, FileText, ArrowUpRight, X, Loader2, Copy } from "lucide-react"
+import { Sparkles, MapPin, Building2, ExternalLink, Calendar, ChevronDown, Check, FileText, ArrowUpRight, X, Loader2, Copy, Target } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 import { NotesDrawerModal } from "@/components/notes-drawer-modal"
+import { GapAnalysisModal } from "@/components/gap-analysis-modal"
 
 interface JobCardProps {
   job: Job
@@ -25,6 +26,7 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; dot: string; tex
 export function JobCard({ job, initialStatus, initialNotes = null, onStatusChange, onNotesChange }: JobCardProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isNotesOpen, setIsNotesOpen] = useState(false)
+  const [isGapOpen, setIsGapOpen] = useState(false)
   const [notes, setNotes] = useState<string | null>(initialNotes)
   const [loading, setLoading] = useState(false)
   const [draft, setDraft] = useState<string | null>(null)
@@ -199,6 +201,15 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Gap Analysis Button */}
+            <button
+              onClick={() => setIsGapOpen(true)}
+              className="p-1.5 rounded-md text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
+              title="Analisis Kecocokan CV (Gap Analysis)"
+            >
+              <Target className="w-4 h-4" />
+            </button>
+
             {/* Notes Button */}
             <button
               onClick={() => setIsNotesOpen(true)}
@@ -240,6 +251,14 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
       </div>
 
       {/* Pop-up Modal: Linear Dark Style */}
+      <GapAnalysisModal
+        jobId={job.id}
+        jobTitle={job.title}
+        company={job.company}
+        isOpen={isGapOpen}
+        onClose={() => setIsGapOpen(false)}
+      />
+
       <NotesDrawerModal
         jobId={job.id}
         jobTitle={job.title}

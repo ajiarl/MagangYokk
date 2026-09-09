@@ -5,7 +5,8 @@ import { Job, ApplicationStatus } from "@/lib/types"
 import { JobCard } from "@/components/job-card"
 import { KanbanBoard } from "@/components/kanban-board"
 import { StatusFilter } from "@/components/status-filter"
-import { Search, SlidersHorizontal, GraduationCap, Briefcase, Sparkles, LayoutGrid, Kanban } from "lucide-react"
+import { ResumeUploadModal } from "@/components/resume-upload-modal"
+import { Search, SlidersHorizontal, RefreshCw, LayoutGrid, Columns3, Upload, Briefcase, GraduationCap, Kanban } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 
 interface JobFeedClientProps {
@@ -23,6 +24,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTech, setSelectedTech] = useState<string | null>(null)
   const [eduTarget, setEduTarget] = useState<EducationTarget>("all")
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
 
   const [jobs, setJobs] = useState(initialJobs)
   const [, startTransition] = useTransition()
@@ -167,9 +169,18 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
           </div>
         </div>
 
-        {/* Right: Target Pendidikan Segmented Control */}
-        <div className="flex items-center gap-2 text-xs font-medium text-[#d0d6e0]">
-          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider">Target:</span>
+        {/* Right: Target Pendidikan Segmented Control & CV Sync */}
+        <div className="flex flex-wrap items-center gap-2.5 text-xs font-medium text-[#d0d6e0]">
+          <button
+            type="button"
+            onClick={() => setIsResumeModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#5e6ad2]/10 hover:bg-[#5e6ad2]/20 text-[#7170ff] border border-[#5e6ad2]/25 transition-all shadow-sm active:scale-95"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Upload CV PDF</span>
+          </button>
+
+          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider ml-1">Target:</span>
           <div className="inline-flex rounded-lg bg-[#08090a] p-1 border border-white/[0.06]">
             <button
               onClick={() => setEduTarget("all")}
@@ -299,6 +310,11 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
           )}
         </div>
       )}
+      {/* Modal Upload CV PDF */}
+      <ResumeUploadModal
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+      />
     </div>
   )
 }
