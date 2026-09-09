@@ -279,7 +279,7 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
             <div className="p-4 px-5 border-b border-white/[0.06] flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-sm text-[#f7f8f8]">Cover Letter Drafter</h3>
-                <p className="text-xs text-[#8a8f98] mt-0.5">{job.title} — {job.company}</p>
+                <p className="text-xs text-[#8a8f98] mt-0.5">{job.title} : {job.company}</p>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
