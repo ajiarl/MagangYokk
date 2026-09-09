@@ -82,24 +82,23 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
 
   return (
     <>
-      <div className="group relative rounded-xl bg-[#0f1011] border border-white/[0.06] hover:border-white/[0.14] transition-all duration-200 flex flex-col justify-between p-5 hover:bg-[#141517]/90 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/5">
+      <div className="group relative rounded-xl bg-[#0b0c0d] border border-white/[0.06] hover:border-white/[0.14] transition-all duration-150 flex flex-col justify-between p-4.5 hover:bg-[#0f1011]">
         
         {/* Top bar: Title, Company, Score */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1 pr-2">
-              <h4 className="font-medium text-sm text-[#f7f8f8] group-hover:text-white transition-colors leading-snug line-clamp-1">
+            <div className="space-y-0.5 pr-2">
+              <h4 className="font-medium text-[13px] text-[#f7f8f8] group-hover:text-white transition-colors leading-snug line-clamp-1">
                 {job.title}
               </h4>
               <div className="flex items-center gap-1.5 text-xs text-[#8a8f98]">
-                <Building2 className="w-3.5 h-3.5 text-[#62666d]" />
-                <span className="font-normal">{job.company}</span>
+                <Building2 className="w-3 h-3 text-[#62666d]" />
+                <span className="font-normal text-[11px]">{job.company}</span>
               </div>
             </div>
 
             {score && (
-              <div className="shrink-0 flex items-center gap-1 bg-[#5e6ad2]/10 border border-[#5e6ad2]/25 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium text-[#7170ff]">
-                <Sparkles className="w-3 h-3" />
+              <div className="shrink-0 flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded text-[11px] font-mono text-[#d0d6e0]">
                 <span>{score}</span>
               </div>
             )}
@@ -115,32 +114,32 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
               
               if (isIntern && !isGrad) {
                 return (
-                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-mono border bg-emerald-500/10 text-emerald-300 border-emerald-500/25">
-                    Magang Mahasiswa
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    Magang
                   </span>
                 )
               }
               return (
-                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-mono border bg-amber-500/10 text-amber-300 border-amber-500/25">
-                  Fresh Graduate / Wisuda
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  Freshgrad
                 </span>
               )
             })()}
 
-            <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-mono border ${
+            <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono border ${
               job.is_remote
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                : "bg-white/[0.03] text-[#8a8f98] border-white/[0.06]"
+                ? "bg-white/[0.04] text-[#d0d6e0] border-white/[0.08]"
+                : "bg-transparent text-[#8a8f98] border-white/[0.05]"
             }`}>
               <MapPin className="w-2.5 h-2.5" />
               {job.is_remote ? "Remote" : job.location || "On-site"}
             </span>
 
             {job.is_paid !== null && (
-              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono border ${
+              <span className={`text-[10px] px-2 py-0.5 rounded font-mono border ${
                 job.is_paid
-                  ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                  : "bg-white/[0.02] text-[#62666d] border-white/[0.05]"
+                  ? "bg-white/[0.04] text-[#d0d6e0] border-white/[0.08]"
+                  : "bg-transparent text-[#62666d] border-white/[0.05]"
               }`}>
                 {job.is_paid ? "Paid" : "Unpaid"}
               </span>
@@ -153,19 +152,19 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
 
           {/* Snippet Description */}
           {job.description && (
-            <p className="text-xs text-[#8a8f98] leading-relaxed line-clamp-2 font-normal pt-1">
+            <p className="text-[11px] text-[#8a8f98] leading-relaxed line-clamp-2 font-normal">
               {job.description}
             </p>
           )}
 
           {/* Matched Tech Chips */}
           {job.score_breakdown && (
-            <div className="flex flex-wrap gap-1 pt-1.5">
+            <div className="flex flex-wrap gap-1">
               {Object.entries(job.score_breakdown).map(([skill, matched]) =>
                 matched ? (
                   <span
                     key={skill}
-                    className="bg-white/[0.03] text-[#d0d6e0] border border-white/[0.06] text-[10px] px-2 py-0.5 rounded font-mono"
+                    className="bg-white/[0.02] text-[#8a8f98] border border-white/[0.05] text-[9px] px-1.5 py-0.2 rounded font-mono"
                   >
                     {skill.replace("_", " ")}
                   </span>
@@ -176,7 +175,7 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
         </div>
 
         {/* Footer: Status select & Actions */}
-        <div className="mt-5 pt-3.5 border-t border-white/[0.05] flex items-center justify-between gap-2">
+        <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between gap-2">
           {/* Status Dropdown */}
           <div className="relative">
             <select
@@ -186,43 +185,43 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
                 if (val) handleStatusChange(val)
               }}
               disabled={isPending}
-              className="appearance-none bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] text-xs text-[#d0d6e0] rounded-md px-2.5 py-1.5 pr-6 cursor-pointer focus:outline-none focus:border-[#5e6ad2] transition-colors"
+              className="appearance-none bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-[11px] font-mono text-[#d0d6e0] rounded px-2 py-1 pr-5 cursor-pointer focus:outline-none focus:border-white/[0.2] transition-colors"
             >
-              <option value="" disabled className="bg-[#0f1011] text-[#8a8f98]">Status...</option>
-              <option value="saved" className="bg-[#0f1011]">Saved</option>
-              <option value="applied" className="bg-[#0f1011]">Applied</option>
-              <option value="interview" className="bg-[#0f1011]">Interview</option>
-              <option value="offered" className="bg-[#0f1011]">Offered 🎉</option>
-              <option value="rejected" className="bg-[#0f1011]">Rejected</option>
+              <option value="" disabled className="bg-[#0b0c0d] text-[#62666d]">Status...</option>
+              <option value="saved" className="bg-[#0b0c0d]">Saved</option>
+              <option value="applied" className="bg-[#0b0c0d]">Applied</option>
+              <option value="interview" className="bg-[#0b0c0d]">Interview</option>
+              <option value="offered" className="bg-[#0b0c0d]">Offered</option>
+              <option value="rejected" className="bg-[#0b0c0d]">Rejected</option>
             </select>
-            <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#62666d] text-[10px]">
+            <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#62666d] text-[9px]">
               ▾
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {/* Gap Analysis Button */}
             <button
               onClick={() => setIsGapOpen(true)}
-              className="p-1.5 rounded-md text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
-              title="Analisis Kecocokan CV (Gap Analysis)"
+              className="p-1 rounded text-[#8a8f98] hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+              title="Analisis Kecocokan CV"
             >
-              <Target className="w-4 h-4" />
+              <Target className="w-3.5 h-3.5" />
             </button>
 
             {/* Notes Button */}
             <button
               onClick={() => setIsNotesOpen(true)}
-              className={`p-1.5 rounded-md transition-colors relative ${
+              className={`p-1 rounded transition-colors relative ${
                 notes
-                  ? "text-[#5e6ad2] bg-[#5e6ad2]/10 hover:bg-[#5e6ad2]/20"
-                  : "text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.05]"
+                  ? "text-[#d0d6e0] bg-white/[0.08]"
+                  : "text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04]"
               }`}
-              title={notes ? "Lihat/Edit Catatan" : "Tambah Catatan"}
+              title={notes ? "Catatan" : "Tambah Catatan"}
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-3.5 h-3.5" />
               {notes && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#5e6ad2]" />
+                <span className="absolute top-1 right-1 w-1 h-1 rounded-full bg-indigo-400" />
               )}
             </button>
 
@@ -230,10 +229,10 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
               href={job.url}
               target="_blank"
               rel="noreferrer"
-              className="p-1.5 rounded-md text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.05] transition-colors"
+              className="p-1 rounded text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04] transition-colors"
               title="Buka Lowongan Asli"
             >
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </a>
 
             <button
@@ -241,9 +240,9 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
                 setIsOpen(true)
                 if (!draft) handleGenerate("id")
               }}
-              className="inline-flex items-center gap-1.5 bg-[#5e6ad2] hover:bg-[#7170ff] text-white text-xs font-medium px-3 py-1.5 rounded-md transition-all shadow-sm active:scale-[0.98]"
+              className="inline-flex items-center gap-1 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-[#f7f8f8] text-[11px] font-mono px-2.5 py-1 rounded transition-all active:scale-95"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3 h-3 text-[#8a8f98]" />
               <span>Cover Letter</span>
             </button>
           </div>

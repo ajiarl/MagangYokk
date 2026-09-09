@@ -137,56 +137,30 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
   })
 
   return (
-    <div className="space-y-5">
-      {/* Top Header Controls: View Mode Switcher + Target Posisi */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#0f1011] rounded-xl border border-white/[0.06]">
-        {/* Left: View Mode Toggle (Feed Cards vs Kanban Board) */}
-        <div className="flex items-center gap-2">
-          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider">Tampilan:</span>
-          <div className="inline-flex rounded-lg bg-[#08090a] p-1 border border-white/[0.06]">
-            <button
-              onClick={() => setViewMode("feed")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
-                viewMode === "feed"
-                  ? "bg-[#5e6ad2] text-white shadow-sm font-semibold"
-                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Feed Cards
-            </button>
-            <button
-              onClick={() => setViewMode("kanban")}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono rounded-md transition-all ${
-                viewMode === "kanban"
-                  ? "bg-[#5e6ad2] text-white shadow-sm font-semibold"
-                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
-              }`}
-            >
-              <Kanban className="w-3.5 h-3.5" />
-              Kanban Board
-            </button>
-          </div>
+    <div className="space-y-4">
+      {/* Integrated Unified Control Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-white/[0.06]">
+        {/* Search Input (Frameless & Fast) */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#62666d]" />
+          <input
+            type="text"
+            placeholder="Filter posisi atau perusahaan..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white/[0.03] hover:bg-white/[0.05] focus:bg-[#0c0d0e] border border-white/[0.08] focus:border-white/[0.2] text-xs text-[#f7f8f8] placeholder-[#62666d] rounded-lg pl-8.5 pr-3 py-1.5 outline-none transition-all font-mono"
+          />
         </div>
 
-        {/* Right: Target Pendidikan Segmented Control & CV Sync */}
-        <div className="flex flex-wrap items-center gap-2.5 text-xs font-medium text-[#d0d6e0]">
-          <button
-            type="button"
-            onClick={() => setIsResumeModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-[#5e6ad2]/10 hover:bg-[#5e6ad2]/20 text-[#7170ff] border border-[#5e6ad2]/25 transition-all shadow-sm active:scale-95"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span>Upload CV PDF</span>
-          </button>
-
-          <span className="text-[#62666d] font-mono text-[11px] uppercase tracking-wider ml-1">Target:</span>
-          <div className="inline-flex rounded-lg bg-[#08090a] p-1 border border-white/[0.06]">
+        {/* Action Controls & Toggles */}
+        <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+          {/* Target Edu (Subtle Segmented) */}
+          <div className="inline-flex rounded-lg border border-white/[0.08] p-0.5 bg-white/[0.02]">
             <button
               onClick={() => setEduTarget("all")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
+              className={`px-2.5 py-1 text-[11px] rounded transition-all ${
                 eduTarget === "all"
-                  ? "bg-white/[0.08] text-white shadow-sm font-semibold"
+                  ? "bg-white/[0.1] text-white font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
               }`}
             >
@@ -194,74 +168,97 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             </button>
             <button
               onClick={() => setEduTarget("intern")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
                 eduTarget === "intern"
-                  ? "bg-emerald-600 text-white shadow-sm font-semibold"
+                  ? "bg-emerald-500/20 text-emerald-300 font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
               }`}
             >
-              <Briefcase className="w-3 h-3 text-emerald-300" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               Magang ({internCount})
             </button>
             <button
               onClick={() => setEduTarget("freshgrad")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded-md transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
                 eduTarget === "freshgrad"
-                  ? "bg-amber-600 text-white shadow-sm font-semibold"
+                  ? "bg-amber-500/20 text-amber-300 font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
               }`}
             >
-              <GraduationCap className="w-3.5 h-3.5 text-amber-200" />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
               Fresh Grad ({freshgradCount})
             </button>
           </div>
+
+          <div className="w-[1px] h-4 bg-white/[0.08] mx-0.5" />
+
+          {/* View Mode Toggle */}
+          <div className="inline-flex rounded-lg border border-white/[0.08] p-0.5 bg-white/[0.02]">
+            <button
+              onClick={() => setViewMode("feed")}
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
+                viewMode === "feed"
+                  ? "bg-white/[0.1] text-white font-medium"
+                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
+              }`}
+            >
+              <LayoutGrid className="w-3 h-3" />
+              Feed
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
+                viewMode === "kanban"
+                  ? "bg-white/[0.1] text-white font-medium"
+                  : "text-[#8a8f98] hover:text-[#d0d6e0]"
+              }`}
+            >
+              <Kanban className="w-3 h-3" />
+              Board
+            </button>
+          </div>
+
+          <div className="w-[1px] h-4 bg-white/[0.08] mx-0.5" />
+
+          {/* CV Sync */}
+          <button
+            type="button"
+            onClick={() => setIsResumeModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-lg border border-white/[0.08] hover:border-white/[0.2] bg-white/[0.02] hover:bg-white/[0.06] text-[#d0d6e0] transition-all"
+          >
+            <Upload className="w-3 h-3 text-[#8a8f98]" />
+            <span>CV</span>
+          </button>
         </div>
       </div>
 
-      {/* Level 2: Search & Tech Stack Pills */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-[#0f1011] rounded-xl border border-white/[0.06]">
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#62666d]" />
-          <input
-            type="text"
-            placeholder="Cari posisi atau perusahaan..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#08090a] border border-white/[0.06] focus:border-[#5e6ad2] text-xs text-[#f7f8f8] placeholder-[#62666d] rounded-lg pl-9 pr-3 py-2 outline-none transition-colors"
-          />
-        </div>
-
-        {/* Tech Quick Filter */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          <span className="text-[11px] text-[#62666d] font-mono shrink-0 mr-1 flex items-center gap-1">
-            <SlidersHorizontal className="w-3 h-3" /> Stack:
-          </span>
-          {TECH_TAGS.map((tech) => {
-            const isSelected = selectedTech === tech
-            return (
-              <button
-                key={tech}
-                onClick={() => setSelectedTech(isSelected ? null : tech)}
-                className={`text-[11px] font-mono px-2.5 py-1 rounded-md transition-all border shrink-0 ${
-                  isSelected
-                    ? "bg-[#5e6ad2] text-white border-[#5e6ad2]"
-                    : "bg-white/[0.02] text-[#8a8f98] hover:text-[#d0d6e0] border-white/[0.06] hover:bg-white/[0.05]"
-                }`}
-              >
-                {tech}
-              </button>
-            )
-          })}
-          {selectedTech && (
+      {/* Tech Stack Horizontal Filter Strip */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px] font-mono">
+        <span className="text-[#62666d] shrink-0 mr-1">Stack:</span>
+        {TECH_TAGS.map((tech) => {
+          const isSelected = selectedTech === tech
+          return (
             <button
-              onClick={() => setSelectedTech(null)}
-              className="text-[10px] text-rose-400 hover:text-rose-300 font-mono px-1.5 py-0.5 underline"
+              key={tech}
+              onClick={() => setSelectedTech(isSelected ? null : tech)}
+              className={`px-2 py-0.5 rounded transition-all shrink-0 ${
+                isSelected
+                  ? "bg-white/[0.12] text-white border border-white/[0.2]"
+                  : "text-[#8a8f98] hover:text-white bg-transparent hover:bg-white/[0.04]"
+              }`}
             >
-              Reset
+              {tech}
             </button>
-          )}
-        </div>
+          )
+        })}
+        {selectedTech && (
+          <button
+            onClick={() => setSelectedTech(null)}
+            className="text-[10px] text-rose-400 hover:text-rose-300 ml-1 underline"
+          >
+            reset
+          </button>
+        )}
       </div>
 
       {/* Tampilan View: Kanban Board vs Feed Cards */}
