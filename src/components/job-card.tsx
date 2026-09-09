@@ -2,13 +2,16 @@
 
 import { useState, useTransition } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { ExternalLink, Sparkles, Building2, FileText, Check, Copy, Loader2, X, MapPin, ArrowUpRight } from "lucide-react"
+import { Sparkles, MapPin, Building2, ExternalLink, Calendar, ChevronDown, Check, FileText, ArrowUpRight, X, Loader2, Copy } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
+import { NotesDrawerModal } from "@/components/notes-drawer-modal"
 
 interface JobCardProps {
   job: Job
   initialStatus?: ApplicationStatus | null
+  initialNotes?: string | null
   onStatusChange?: (status: ApplicationStatus) => void
+  onNotesChange?: (notes: string) => void
 }
 
 const STATUS_CONFIG: Record<ApplicationStatus, { label: string; dot: string; text: string }> = {
@@ -19,8 +22,10 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; dot: string; tex
   rejected: { label: "Rejected", dot: "bg-rose-400", text: "text-rose-400" }
 }
 
-export function JobCard({ job, initialStatus, onStatusChange }: JobCardProps) {
+export function JobCard({ job, initialStatus, initialNotes = null, onStatusChange, onNotesChange }: JobCardProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isNotesOpen, setIsNotesOpen] = useState(false)
+  const [notes, setNotes] = useState<string | null>(initialNotes)
   const [loading, setLoading] = useState(false)
   const [draft, setDraft] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -194,6 +199,22 @@ export function JobCard({ job, initialStatus, onStatusChange }: JobCardProps) {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Notes Button */}
+            <button
+              onClick={() => setIsNotesOpen(true)}
+              className={`p-1.5 rounded-md transition-colors relative ${
+                notes
+                  ? "text-[#5e6ad2] bg-[#5e6ad2]/10 hover:bg-[#5e6ad2]/20"
+                  : "text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.05]"
+              }`}
+              title={notes ? "Lihat/Edit Catatan" : "Tambah Catatan"}
+            >
+              <FileText className="w-4 h-4" />
+              {notes && (
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#5e6ad2]" />
+              )}
+            </button>
+
             <a
               href={job.url}
               target="_blank"
@@ -211,7 +232,7 @@ export function JobCard({ job, initialStatus, onStatusChange }: JobCardProps) {
               }}
               className="inline-flex items-center gap-1.5 bg-[#5e6ad2] hover:bg-[#7170ff] text-white text-xs font-medium px-3 py-1.5 rounded-md transition-all shadow-sm active:scale-[0.98]"
             >
-              <FileText className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5" />
               <span>Cover Letter</span>
             </button>
           </div>
@@ -219,6 +240,19 @@ export function JobCard({ job, initialStatus, onStatusChange }: JobCardProps) {
       </div>
 
       {/* Pop-up Modal: Linear Dark Style */}
+      <NotesDrawerModal
+        jobId={job.id}
+        jobTitle={job.title}
+        company={job.company}
+        initialNotes={notes}
+        isOpen={isNotesOpen}
+        onClose={() => setIsNotesOpen(false)}
+        onSaveNotes={(saved) => {
+          setNotes(saved)
+          if (onNotesChange) onNotesChange(saved)
+        }}
+      />
+
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-[#0f1011] rounded-2xl border border-white/[0.1] shadow-2xl max-w-2xl w-full max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in-0 zoom-in-95">

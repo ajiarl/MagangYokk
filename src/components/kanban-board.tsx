@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { Sparkles, MapPin, Building2, ExternalLink, Calendar, GripVertical, CheckCircle2 } from "lucide-react"
+import { Sparkles, MapPin, Building2, ExternalLink, Calendar, GripVertical, FileText } from "lucide-react"
+import { NotesDrawerModal } from "@/components/notes-drawer-modal"
 
 interface KanbanBoardProps {
-  jobs: (Job & { applicationStatus?: ApplicationStatus | null })[]
+  jobs: (Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]
   onStatusChange: (jobId: string, newStatus: ApplicationStatus) => void
+  onNotesChange?: (jobId: string, notes: string) => void
 }
 
 interface ColumnConfig {
@@ -55,9 +57,10 @@ const COLUMNS: ColumnConfig[] = [
   }
 ]
 
-export function KanbanBoard({ jobs, onStatusChange }: KanbanBoardProps) {
+export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoardProps) {
   const [draggedJobId, setDraggedJobId] = useState<string | null>(null)
   const [dragOverCol, setDragOverCol] = useState<ApplicationStatus | null>(null)
+  const [activeNotesJob, setActiveNotesJob] = useState<(Job & { applicationNotes?: string | null }) | null>(null)
 
   function handleDragStart(e: React.DragEvent, jobId: string) {
     e.dataTransfer.setData("text/plain", jobId)
@@ -171,24 +174,46 @@ export function KanbanBoard({ jobs, onStatusChange }: KanbanBoardProps) {
                           </div>
                         </div>
 
-                        {/* Footer card: Date / Direct Link */}
+                        {/* Footer card: Date / Notes / Direct Link */}
                         <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] font-mono text-[#62666d] pl-5">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {job.scraped_at ? new Date(job.scraped_at).toLocaleDateString("id-ID", { month: "short", day: "numeric" }) : "Aktif"}
                           </span>
 
-                          <a
-                            href={job.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[#8a8f98] hover:text-[#5e6ad2] flex items-center gap-0.5 transition-colors p-1 -mr-1"
-                            title="Buka lowongan asli"
-                          >
-                            <span>Lamar</span>
-                            <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
+                          <div className="flex items-center gap-1.5">
+                            {/* Notes trigger */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActiveNotesJob(job)
+                              }}
+                              className={`p-1 rounded transition-colors relative ${
+                                job.applicationNotes
+                                  ? "text-[#5e6ad2] bg-[#5e6ad2]/15 hover:bg-[#5e6ad2]/25"
+                                  : "text-[#8a8f98] hover:text-white hover:bg-white/[0.05]"
+                              }`}
+                              title={job.applicationNotes ? "Lihat Catatan" : "Tambah Catatan"}
+                            >
+                              <FileText className="w-3 h-3" />
+                              {job.applicationNotes && (
+                                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#5e6ad2]" />
+                              )}
+                            </button>
+
+                            <a
+                              href={job.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[#8a8f98] hover:text-[#5e6ad2] flex items-center gap-0.5 transition-colors p-1"
+                              title="Buka lowongan asli"
+                            >
+                              <span>Lamar</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          </div>
                         </div>
                       </div>
                     )
@@ -199,6 +224,22 @@ export function KanbanBoard({ jobs, onStatusChange }: KanbanBoardProps) {
           )
         })}
       </div>
+
+      {/* Modal Edit Notes for Kanban Card */}
+      {activeNotesJob && (
+        <NotesDrawerModal
+          jobId={activeNotesJob.id}
+          jobTitle={activeNotesJob.title}
+          company={activeNotesJob.company}
+          initialNotes={activeNotesJob.applicationNotes || null}
+          isOpen={!!activeNotesJob}
+          onClose={() => setActiveNotesJob(null)}
+          onSaveNotes={(savedNotes) => {
+            if (onNotesChange) onNotesChange(activeNotesJob.id, savedNotes)
+            setActiveNotesJob(null)
+          }}
+        />
+      )}
     </div>
   )
 }

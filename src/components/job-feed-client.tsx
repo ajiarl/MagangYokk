@@ -9,7 +9,7 @@ import { Search, SlidersHorizontal, GraduationCap, Briefcase, Sparkles, LayoutGr
 import { updateJobStatus } from "@/app/actions"
 
 interface JobFeedClientProps {
-  initialJobs: (Job & { applicationStatus?: ApplicationStatus | null })[]
+  initialJobs: (Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]
 }
 
 const TECH_TAGS = ["Next.js", "React", "TypeScript", "Laravel", "Supabase", "MySQL", "PHP"]
@@ -41,6 +41,14 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
         setJobs(initialJobs)
       }
     })
+  }
+
+  function handleNotesChange(jobId: string, newNotes: string) {
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id === jobId ? { ...j, applicationNotes: newNotes } : j
+      )
+    )
   }
 
   // Deteksi target loker: Magang Mahasiswa vs Fresh Graduate / Wisuda
@@ -252,7 +260,11 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             <span>Tarik dan geser kartu ke kolom yang diinginkan untuk update status otomatis</span>
             <span>Total {filteredJobs.length} loker terpantau</span>
           </div>
-          <KanbanBoard jobs={filteredJobs} onStatusChange={handleStatusChange} />
+          <KanbanBoard
+            jobs={filteredJobs}
+            onStatusChange={handleStatusChange}
+            onNotesChange={handleNotesChange}
+          />
         </div>
       ) : (
         <div className="space-y-5">
@@ -278,7 +290,9 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
                   key={job.id}
                   job={job}
                   initialStatus={job.applicationStatus}
+                  initialNotes={job.applicationNotes}
                   onStatusChange={(status) => handleStatusChange(job.id, status)}
+                  onNotesChange={(notes) => handleNotesChange(job.id, notes)}
                 />
               ))}
             </div>

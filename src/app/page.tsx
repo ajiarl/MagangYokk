@@ -5,7 +5,7 @@ import { Sparkles, Terminal } from "lucide-react"
 
 export const revalidate = 0
 
-async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: ApplicationStatus | null })[]> {
+async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]> {
   const { data: jobs, error: jobsError } = await supabase
     .from("jobs")
     .select("*")
@@ -17,19 +17,26 @@ async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: A
 
   const { data: applications } = await supabase
     .from("applications")
-    .select("job_id, status")
+    .select("job_id, status, notes")
 
-  const appMap = new Map<string, ApplicationStatus>()
+  const appMap = new Map<string, { status: ApplicationStatus; notes: string | null }>()
   if (applications) {
     applications.forEach((app) => {
-      appMap.set(app.job_id, app.status as ApplicationStatus)
+      appMap.set(app.job_id, {
+        status: app.status as ApplicationStatus,
+        notes: app.notes || null
+      })
     })
   }
 
-  return jobs.map((job) => ({
-    ...job,
-    applicationStatus: appMap.get(job.id) || null
-  }))
+  return jobs.map((job) => {
+    const userApp = appMap.get(job.id)
+    return {
+      ...job,
+      applicationStatus: userApp?.status || null,
+      applicationNotes: userApp?.notes || null
+    }
+  })
 }
 
 async function getProfile() {
