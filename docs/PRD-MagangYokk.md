@@ -218,12 +218,15 @@ Update status di Kanban (Applied/Interview/Rejected)
 **Checklist Implementasi Nyata:**
 - [x] Setup repo Next.js 16.3.4 + Supabase PostgreSQL + Prisma 7 (@prisma/adapter-pg)
 - [x] DB Schema: `jobs`, `applications`, `profiles`, `seen_jobs` (terpasang di Supabase live)
-- [x] Scraper update: Headless radar sync langsung ke Supabase (`scripts/radar.py`)
+- [x] Multi-Source Scraper Cloud & Stealth: LinkedIn via GitHub Actions daemon + Jobstreet Indonesia via Camoufox C++ anti-detect browser (79 loker aktif, 0 dummy data)
 - [x] Cloud Automation: GitHub Actions daemon berjalan terjadwal jam 09:00 & 18:00 WIB
 - [x] Job Feed halaman utama + multi-filter (Stack, Search, Status, Edu Target Magang vs Wisuda)
 - [x] Detail lowongan + match score breakdown real-time
+- [x] Application Status Tracking 6-state (Saved → Applied → Interview → Offered → Rejected) dengan optimistic UI update
+- [x] Interactive Visual Kanban Board (Drag & Drop) untuk kelola pipeline lamaran kerja secara instan
+- [x] Application Notes Drawer: modal pencatatan riwayat kontak HR, jadwal interview, dan gaji tersimpan di Supabase
+- [x] Telegram Instant Push Alert: watchdog daemon 30m mengabari Aji via chat Telegram saat ada loker relevan baru (Score >= 6.0)
 - [x] Cover Letter Generator via Groq API (`qwen/qwen3.8-27b`) dengan strict anti-hallucination prompt
-- [x] Application Status Tracking (Saved → Applied → Interview → Offered → Rejected) dengan optimistic UI update
 - [x] Standar UI/UX papan atas: Mengadopsi bundle Taste, UI/UX Pro Max, dan Impeccable
 - [x] Maintenance & Security Runbook (`docs/MAINTENANCE.md`)
 - [ ] Final Step: Deploy ke Vercel (kapan pun Aji ingin link production live)
