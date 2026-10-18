@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
+import { getJobEduCategory } from "@/lib/job-utils"
 import { Sparkles, MapPin, Building2, FileText, ArrowUpRight, Target } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 
@@ -67,24 +68,15 @@ export function JobCard({
         {/* Badges: Location, Source, & Edu Target */}
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
           {/* Edu Target Tag */}
-          {(() => {
-            const text = `${job.title} ${job.description || ""}`.toLowerCase()
-            const isIntern = text.includes("intern") || text.includes("magang") || text.includes("pkl") || text.includes("mahasiswa")
-            const isGrad = text.includes("fresh graduate") || text.includes("sarjana") || text.includes("s1") || text.includes("d3")
-            
-            if (isIntern && !isGrad) {
-              return (
-                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  Magang
-                </span>
-              )
-            }
-            return (
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                Freshgrad
-              </span>
-            )
-          })()}
+          {getJobEduCategory(job) === "intern" ? (
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              Magang
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              Freshgrad
+            </span>
+          )}
 
           <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono border ${
             job.is_remote

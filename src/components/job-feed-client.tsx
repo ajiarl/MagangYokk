@@ -8,16 +8,14 @@ import { StatusFilter } from "@/components/status-filter"
 import { ResumeUploadModal } from "@/components/resume-upload-modal"
 import { NotesDrawerModal } from "@/components/notes-drawer-modal"
 import { GapAnalysisModal } from "@/components/gap-analysis-modal"
+import { CoverLetterModal } from "@/components/cover-letter-modal"
+import { getJobEduCategory } from "@/lib/job-utils"
 import {
   Search,
   RefreshCw,
   LayoutGrid,
   Upload,
-  Kanban,
-  X,
-  Loader2,
-  Copy,
-  Check
+  Kanban
 } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 
@@ -38,10 +36,6 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
   const [eduTarget, setEduTarget] = useState<EducationTarget>("all")
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
   const [coverLetterJob, setCoverLetterJob] = useState<Job | null>(null)
-  const [coverLetterLoading, setCoverLetterLoading] = useState(false)
-  const [coverLetterDraft, setCoverLetterDraft] = useState<string | null>(null)
-  const [coverLetterCopied, setCoverLetterCopied] = useState(false)
-  const [coverLetterLang, setCoverLetterLang] = useState<"id" | "en">("id")
   const [activeGapJob, setActiveGapJob] = useState<Job | null>(null)
   const [activeNotesJob, setActiveNotesJob] = useState<(Job & { applicationNotes?: string | null }) | null>(null)
 
@@ -76,78 +70,6 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
         j.id === jobId ? { ...j, applicationNotes: newNotes } : j
       )
     )
-  }
-  async function handleGenerateCoverLetter(job: Job, selectedLang: "id" | "en") {
-    setCoverLetterLoading(true)
-    setCoverLetterLang(selectedLang)
-    try {
-      const res = await fetch("/api/cover-letter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId: job.id, lang: selectedLang })
-      })
-      const data = (await res.json()) as { draft?: string; error?: string }
-      if (data.draft) {
-        setCoverLetterDraft(data.draft)
-        const currentJob = jobs.find((j) => j.id === job.id)
-        if (!currentJob?.applicationStatus) {
-          handleStatusChange(job.id, "saved")
-        }
-      } else {
-        alert(data.error || "Gagal generate cover letter")
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err)
-      alert("Error: " + message)
-    } finally {
-      setCoverLetterLoading(false)
-    }
-  }
-
-  function handleOpenCoverLetter(job: Job) {
-    setCoverLetterJob(job)
-    setCoverLetterDraft(null)
-    setCoverLetterCopied(false)
-    handleGenerateCoverLetter(job, "id")
-  }
-
-  function handleCopyCoverLetter() {
-    if (!coverLetterDraft) return
-    navigator.clipboard.writeText(coverLetterDraft)
-    setCoverLetterCopied(true)
-    setTimeout(() => setCoverLetterCopied(false), 2000)
-  }
-
-  // Deteksi target loker: Magang Mahasiswa vs Fresh Graduate / Wisuda
-  function getJobEduCategory(job: Job): "intern" | "freshgrad" {
-    const text = `${job.title} ${job.description || ""}`.toLowerCase()
-    
-    // Tanda kuat magang mahasiswa aktif
-    const isInternKeywords = 
-      text.includes("intern") || 
-      text.includes("magang") || 
-      text.includes("pkl") || 
-      text.includes("student") || 
-      text.includes("mahasiswa") ||
-      text.includes("kuliah")
-
-    // Tanda fresh graduate / wisuda
-    const isGradKeywords = 
-      text.includes("fresh graduate") || 
-      text.includes("freshgrad") || 
-      text.includes("lulusan") || 
-      text.includes("sarjana") || 
-      text.includes("s1") || 
-      text.includes("d3") || 
-      text.includes("bachelor")
-
-    if (isInternKeywords && !isGradKeywords) {
-      return "intern"
-    }
-    if (isGradKeywords || (!isInternKeywords && (text.includes("junior") || text.includes("entry")))) {
-      return "freshgrad"
-    }
-    return isInternKeywords ? "intern" : "freshgrad"
   }
 
   // Hitung counter untuk kategori pendidikan
@@ -378,7 +300,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
                   initialStatus={job.applicationStatus}
                   initialNotes={job.applicationNotes}
                   onStatusChange={(status) => handleStatusChange(job.id, status)}
-                  onOpenCoverLetter={handleOpenCoverLetter}
+                  onOpenCoverLetter={setCoverLetterJob}
                   onOpenGap={(j) => setActiveGapJob(j)}
                   onOpenNotes={(j) => setActiveNotesJob(j)}
                 />
@@ -422,101 +344,13 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
       )}
 
       {/* Cover Letter Drafter Modal (Hybrid Bottom-Sheet) */}
-      {coverLetterJob && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
-          >
-            {/* Mobile Drag Handle Indicator */}
-            <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mt-2.5 sm:hidden shrink-0" />
-
-            {/* Modal Header */}
-            <div className="p-4 sm:px-6 border-b border-white/[0.06] flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="font-semibold text-sm text-white">Cover Letter Drafter</h3>
-                <p className="text-xs text-[#8a8f98] mt-0.5 line-clamp-1">{coverLetterJob.title} • {coverLetterJob.company}</p>
-              </div>
-              <button
-                onClick={() => setCoverLetterJob(null)}
-                className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Language Switcher */}
-            <div className="px-4 sm:px-6 py-2.5 bg-[#08090a] border-b border-white/[0.05] flex items-center justify-between text-xs shrink-0">
-              <span className="text-[#8a8f98] text-[11px] font-mono">Bahasa Draft:</span>
-              <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
-                <button
-                  disabled={coverLetterLoading}
-                  onClick={() => handleGenerateCoverLetter(coverLetterJob, "id")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 ${
-                    coverLetterLang === "id"
-                      ? "bg-[#5e6ad2] text-white shadow-sm"
-                      : "text-[#8a8f98] hover:text-[#d0d6e0]"
-                  }`}
-                >
-                  Bahasa Indonesia
-                </button>
-                <button
-                  disabled={coverLetterLoading}
-                  onClick={() => handleGenerateCoverLetter(coverLetterJob, "en")}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 ${
-                    coverLetterLang === "en"
-                      ? "bg-[#5e6ad2] text-white shadow-sm"
-                      : "text-[#8a8f98] hover:text-[#d0d6e0]"
-                  }`}
-                >
-                  English
-                </button>
-              </div>
-            </div>
-
-            {/* Text Preview Area */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
-              {coverLetterLoading ? (
-                <div className="py-20 text-center space-y-3">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#7170ff]" />
-                  <p className="text-xs text-[#8a8f98]">Menyusun draf autentik berbasis profil kamu...</p>
-                </div>
-              ) : coverLetterDraft ? (
-                <div className="bg-[#08090a] p-4 sm:p-5 rounded-xl border border-white/[0.06] text-xs font-mono leading-relaxed whitespace-pre-wrap text-[#d0d6e0] selection:bg-[#5e6ad2]/30">
-                  {coverLetterDraft}
-                </div>
-              ) : (
-                <div className="py-16 text-center text-xs text-[#8a8f98]">
-                  Pilih bahasa di atas untuk memuat draf surat.
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 sm:px-6 border-t border-white/[0.06] bg-[#08090a] flex items-center justify-between shrink-0">
-              <span className="text-[11px] text-[#8a8f98] font-mono hidden sm:inline">
-                Otomatis tersimpan ke status lamaran
-              </span>
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  disabled={!coverLetterDraft || coverLetterLoading}
-                  onClick={handleCopyCoverLetter}
-                  className="h-9 px-3.5 inline-flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-[#d0d6e0] font-medium rounded-lg transition-colors touch-manipulation active:scale-95 disabled:opacity-50"
-                >
-                  {coverLetterCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{coverLetterCopied ? "Tersalin!" : "Salin Surat"}</span>
-                </button>
-                <button
-                  onClick={() => setCoverLetterJob(null)}
-                  className="h-9 px-4 inline-flex items-center bg-[#5e6ad2] hover:bg-[#7170ff] text-white text-xs font-medium rounded-lg transition-colors touch-manipulation active:scale-95"
-                >
-                  Selesai
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <CoverLetterModal
+        key={coverLetterJob?.id}
+        job={coverLetterJob}
+        isOpen={Boolean(coverLetterJob)}
+        onClose={() => setCoverLetterJob(null)}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   )
 }

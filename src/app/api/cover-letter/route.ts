@@ -13,15 +13,23 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { jobId, lang = "id" } = body
+    const { jobId, lang } = body
 
-    if (!jobId) {
+    if (!jobId || typeof jobId !== "string" || !jobId.trim()) {
       return NextResponse.json(
-        { error: "Parameter jobId wajib diisi." },
+        { error: "Parameter jobId wajib diisi dengan ID valid." },
         { status: 400 }
       )
     }
 
+    const validLangs = ["id", "en"] as const
+    const selectedLang = lang ?? "id"
+    if (!validLangs.includes(selectedLang)) {
+      return NextResponse.json(
+        { error: "Parameter lang harus bernilai 'id' atau 'en'." },
+        { status: 400 }
+      )
+    }
     // 1. Ambil detail Job dari Supabase
     const { data: job, error: jobError } = await supabase
       .from("jobs")
@@ -59,7 +67,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     // 3. Susun Prompt Spesifik & Kontekstual (Strict Grounding, No Hallucination)
-    const isEn = lang === "en"
+    const isEn = selectedLang === "en"
     const systemPrompt = isEn
       ? `You are an expert tech career coach and professional copywriter specializing in developer internships and junior software engineering applications.
 Your goal is to write a compelling, concise, and authentic cover letter / cold email tailored specifically to the job description and candidate's real skills.
@@ -129,7 +137,7 @@ INSTRUKSI:
       const errText = await groqRes.text()
       console.error("Groq API Error:", errText)
       return NextResponse.json(
-        { error: `Gagal generate via Groq: ${groqRes.statusText}` },
+        { error: "Layanan AI cover letter sedang mengalami kendala atau sibuk. Silakan coba beberapa saat lagi." },
         { status: 502 }
       )
     }
@@ -144,7 +152,7 @@ INSTRUKSI:
         profile_id: profile.id,
         status: existingApp?.status ?? "saved",
         cover_letter_draft: draft,
-        cover_letter_lang: lang,
+        cover_letter_lang: selectedLang,
         updated_at: new Date().toISOString()
       },
       { onConflict: "job_id,profile_id" }
@@ -155,10 +163,10 @@ INSTRUKSI:
       draft,
       jobId: job.id
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error generating cover letter:", error)
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      { error: "Terjadi kesalahan internal saat membuat cover letter." },
       { status: 500 }
     )
   }

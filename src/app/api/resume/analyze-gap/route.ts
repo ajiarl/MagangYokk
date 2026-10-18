@@ -10,12 +10,24 @@ interface GapAnalysisResponse {
   verdict: string
 }
 
+function extractJson(text: string): Record<string, unknown> {
+  try {
+    return JSON.parse(text)
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/)
+    if (match) {
+      return JSON.parse(match[0])
+    }
+    throw new Error("Format output AI tidak mengandung JSON valid.")
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { jobId } = await req.json()
 
-    if (!jobId) {
-      return NextResponse.json({ error: "jobId wajib disertakan." }, { status: 400 })
+    if (!jobId || typeof jobId !== "string" || !jobId.trim()) {
+      return NextResponse.json({ error: "Parameter jobId wajib diisi dengan ID valid." }, { status: 400 })
     }
 
     // 1. Ambil data lowongan
@@ -97,19 +109,43 @@ Analisis kesesuaian profil dan keluarkan JSON valid sekarang:`
     if (!groqRes.ok) {
       const errText = await groqRes.text()
       console.error("Groq API error:", errText)
-      return NextResponse.json({ error: "Gagal memproses analisis AI: " + errText }, { status: 500 })
+      return NextResponse.json(
+        { error: "Layanan analisis AI sedang sibuk atau tidak dapat dihubungi. Silakan coba beberapa saat lagi." },
+        { status: 502 }
+      )
     }
 
     const groqData = await groqRes.json()
-    const content = groqData.choices[0]?.message?.content || "{}"
-    const parsedAnalysis: GapAnalysisResponse = JSON.parse(content)
+    const content = groqData.choices?.[0]?.message?.content || "{}"
+
+    let parsedAnalysis: GapAnalysisResponse
+    try {
+      const raw = extractJson(content)
+      parsedAnalysis = {
+        matchScore: typeof raw.matchScore === "number" ? Math.max(0, Math.min(100, Math.round(raw.matchScore))) : 50,
+        matchedSkills: Array.isArray(raw.matchedSkills) ? raw.matchedSkills.map(String) : [],
+        missingSkills: Array.isArray(raw.missingSkills) ? raw.missingSkills.map(String) : [],
+        keyStrengths: Array.isArray(raw.keyStrengths) ? raw.keyStrengths.map(String) : [],
+        growthAdvice: typeof raw.growthAdvice === "string" ? raw.growthAdvice : "Tingkatkan relevansi portfolio dengan kebutuhan lowongan.",
+        verdict: typeof raw.verdict === "string" ? raw.verdict : "Analisis profil selesai diproses."
+      }
+    } catch (parseErr) {
+      console.error("Failed to parse AI output:", content, parseErr)
+      return NextResponse.json(
+        { error: "Format respons dari AI tidak valid. Silakan coba kembali." },
+        { status: 502 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
       analysis: parsedAnalysis
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Gap Analysis error:", err)
-    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Terjadi kesalahan internal saat memproses analisis resume." },
+      { status: 500 }
+    )
   }
 }

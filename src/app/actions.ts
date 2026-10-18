@@ -16,7 +16,7 @@ export async function updateJobStatus(jobId: string, status: ApplicationStatus) 
       return { success: false, error: "Profil tidak ditemukan." }
     }
 
-    const payload: Record<string, any> = {
+    const payload: Record<string, string | ApplicationStatus> = {
       job_id: jobId,
       profile_id: profile.id,
       status: status,
@@ -38,9 +38,10 @@ export async function updateJobStatus(jobId: string, status: ApplicationStatus) 
 
     revalidatePath("/")
     return { success: true }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Server Action updateJobStatus error:", err)
-    return { success: false, error: err.message || "Internal server error" }
+    const message = err instanceof Error ? err.message : "Internal server error"
+    return { success: false, error: message }
   }
 }
 
@@ -56,7 +57,7 @@ export async function updateApplicationNotes(jobId: string, notes: string) {
       return { success: false, error: "Profil tidak ditemukan." }
     }
 
-    const payload: Record<string, any> = {
+    const payload: Record<string, string> = {
       job_id: jobId,
       profile_id: profile.id,
       notes: notes,
@@ -74,8 +75,9 @@ export async function updateApplicationNotes(jobId: string, notes: string) {
 
     revalidatePath("/")
     return { success: true }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Server Action updateApplicationNotes error:", err)
-    return { success: false, error: err.message || "Internal server error" }
+    const message = err instanceof Error ? err.message : "Internal server error"
+    return { success: false, error: message }
   }
 }

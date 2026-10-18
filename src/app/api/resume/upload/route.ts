@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
-// @ts-ignore
+// @ts-expect-error pdf-parse-fork lacks bundled type definitions
 import pdfParse from "pdf-parse-fork"
 
 export async function POST(req: NextRequest) {
@@ -11,14 +11,35 @@ export async function POST(req: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: "File PDF resume tidak ditemukan." }, { status: 400 })
     }
+    const MAX_FILE_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "Ukuran file melebihi batas maksimal 10 MB." },
+        { status: 413 }
+      )
+    }
 
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      return NextResponse.json({ error: "Format file wajib PDF." }, { status: 400 })
+    const hasPdfExt = file.name.toLowerCase().endsWith(".pdf")
+    const isPdfMime = file.type === "application/pdf" || file.type === "application/x-pdf"
+    if (!hasPdfExt || !isPdfMime) {
+      return NextResponse.json(
+        { error: "Format file wajib dokumen PDF (.pdf)." },
+        { status: 400 }
+      )
     }
 
     // Convert File to ArrayBuffer & Buffer
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
+
+    // Verify PDF Magic Bytes (%PDF)
+    const isMagicPdf = buffer.subarray(0, 4).toString("utf-8") === "%PDF"
+    if (!isMagicPdf) {
+      return NextResponse.json(
+        { error: "File bukan dokumen PDF yang valid." },
+        { status: 400 }
+      )
+    }
 
     // Parse PDF text
     const parsed = await pdfParse(buffer)
@@ -53,8 +74,11 @@ export async function POST(req: NextRequest) {
       textLength: rawText.length,
       preview: rawText.slice(0, 300) + "..."
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Resume upload error:", err)
-    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Gagal memproses file resume. Pastikan file PDF tidak terenkripsi atau korup." },
+      { status: 500 }
+    )
   }
 }
