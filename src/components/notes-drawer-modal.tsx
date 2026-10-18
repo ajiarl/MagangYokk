@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, FileText, Check, Loader2 } from "lucide-react"
 import { updateApplicationNotes } from "@/app/actions"
 
@@ -13,6 +13,8 @@ interface NotesDrawerModalProps {
   onClose: () => void
   onSaveNotes: (notes: string) => void
 }
+const DRAFT_KEY_PREFIX = "magangyokk_draft_notes_"
+
 
 export function NotesDrawerModal({
   jobId,
@@ -23,11 +25,67 @@ export function NotesDrawerModal({
   onClose,
   onSaveNotes
 }: NotesDrawerModalProps) {
+  const storageKey = `${DRAFT_KEY_PREFIX}${jobId}`
   const [notes, setNotes] = useState(initialNotes || "")
   const [isSaving, setIsSaving] = useState(false)
   const [savedSuccess, setSavedSuccess] = useState(false)
+  const [isDraftRecovered, setIsDraftRecovered] = useState(false)
+
+  // SSR hydration-safe draft recovery on modal open
+  useEffect(() => {
+    if (!isOpen || !jobId) return
+
+    try {
+      if (typeof window !== "undefined") {
+        const localDraft = localStorage.getItem(storageKey)
+        if (localDraft !== null && localDraft !== (initialNotes || "")) {
+          queueMicrotask(() => {
+            setNotes(localDraft)
+            setIsDraftRecovered(true)
+          })
+          return
+        }
+      }
+    } catch (e) {
+      console.warn("Gagal membaca draf catatan dari localStorage:", e)
+    }
+
+    queueMicrotask(() => {
+      setNotes(initialNotes || "")
+      setIsDraftRecovered(false)
+    })
+  }, [isOpen, jobId, initialNotes, storageKey])
 
   if (!isOpen) return null
+
+  function handleNotesChange(value: string) {
+    setNotes(value)
+    try {
+      if (typeof window !== "undefined" && jobId) {
+        if (value.trim().length > 0) {
+          localStorage.setItem(storageKey, value)
+          setIsDraftRecovered(value !== (initialNotes || ""))
+        } else {
+          localStorage.removeItem(storageKey)
+          setIsDraftRecovered(false)
+        }
+      }
+    } catch (e) {
+      console.warn("Gagal menyimpan draf catatan ke localStorage:", e)
+    }
+  }
+
+  function handleDiscardDraft() {
+    try {
+      if (typeof window !== "undefined" && jobId) {
+        localStorage.removeItem(storageKey)
+      }
+    } catch (e) {
+      console.warn("Gagal menghapus draf catatan dari localStorage:", e)
+    }
+    setNotes(initialNotes || "")
+    setIsDraftRecovered(false)
+  }
 
   async function handleSave() {
     setIsSaving(true)
@@ -35,6 +93,14 @@ export function NotesDrawerModal({
     setIsSaving(false)
 
     if (res.success) {
+      try {
+        if (typeof window !== "undefined" && jobId) {
+          localStorage.removeItem(storageKey)
+        }
+      } catch (e) {
+        console.warn("Gagal membersihkan draf catatan dari localStorage:", e)
+      }
+      setIsDraftRecovered(false)
       setSavedSuccess(true)
       onSaveNotes(notes)
       setTimeout(() => {
@@ -45,7 +111,6 @@ export function NotesDrawerModal({
       alert("Gagal menyimpan catatan: " + res.error)
     }
   }
-
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
       <div
@@ -76,13 +141,28 @@ export function NotesDrawerModal({
 
         {/* Notes Textarea Body */}
         <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
+          {isDraftRecovered && (
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs font-mono text-amber-300">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span>Draf lokal dipulihkan dari browser</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="text-amber-400/80 hover:text-amber-300 hover:underline text-[11px] ml-2 touch-manipulation"
+              >
+                Hapus draf
+              </button>
+            </div>
+          )}
           <div className="space-y-1.5">
             <label className="text-[11px] font-mono text-[#8a8f98]">
               Catatan pribadi (kontak HR, tanggal interview, gaji, status follow-up):
             </label>
             <textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => handleNotesChange(e.target.value)}
               placeholder="Contoh: Udah kirim email ke HR Mas Dimas (hr@perusahaan.com). Interview tahap 1 dijadwalkan Rabu 14:00 WIB via Google Meet."
               rows={6}
               className="w-full bg-[#08090a] border border-white/[0.08] rounded-xl p-3 text-xs text-[#f7f8f8] placeholder-[#8a8f98] transition-colors resize-none leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a]"

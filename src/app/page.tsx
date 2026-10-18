@@ -2,7 +2,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
-export const revalidate = 0
+export const revalidate = 300
 
 type RawJobRecord = Job & {
   applications?: Array<{ status: ApplicationStatus; notes: string | null }> | null
@@ -16,9 +16,21 @@ async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: A
     .order("scraped_at", { ascending: false })
     .limit(100)
 
-  if (jobsError || !jobs) return []
+  if (jobsError) {
+    console.error("Supabase jobs query error:", jobsError)
+    // Cegah kegagalan build statis saat CI/CD atau offline prerender jika database belum aktif
+    if (process.env.NEXT_PHASE === "phase-production-build") {
+      console.warn("Build-time notice: Database tidak dapat dijangkau saat prerender statis. Fallback draf kosong untuk build.")
+      return []
+    }
 
-  const rawJobs = jobs as RawJobRecord[]
+    throw new Error(
+      `Gagal memuat daftar lowongan kerja dari database: ${jobsError.message || "Koneksi PostgREST terputus"}`
+    )
+  }
+
+  const rawJobs = (jobs || []) as RawJobRecord[]
+
   return rawJobs.map((job) => {
     const { applications, ...jobData } = job
     const userApp = Array.isArray(applications) ? applications[0] : null
