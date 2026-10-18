@@ -152,7 +152,10 @@ Analisis kesesuaian profil dan keluarkan JSON valid sekarang:`
         verdict: typeof raw.verdict === "string" ? raw.verdict : "Analisis profil selesai diproses."
       }
     } catch (parseErr) {
-      console.error("Failed to parse AI output:", content, parseErr)
+      console.error("Failed to parse AI output for job:", {
+        jobId,
+        error: parseErr instanceof Error ? parseErr.message : String(parseErr),
+      })
       return NextResponse.json(
         { error: "Format respons dari AI tidak valid. Silakan coba kembali." },
         { status: 502 }
