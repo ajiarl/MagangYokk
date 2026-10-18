@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { jobId, lang } = body
+    const { jobId, lang, regenerate } = body
 
     if (!jobId || typeof jobId !== "string" || !jobId.trim()) {
       return NextResponse.json(
@@ -85,10 +85,20 @@ export async function POST(req: NextRequest) {
     // 2b. Ambil status aplikasi eksisting (jika sudah pernah apply/melamar)
     const { data: existingApp } = await supabase
       .from("applications")
-      .select("status")
+      .select("status, cover_letter_draft, cover_letter_lang")
       .eq("job_id", job.id)
       .eq("profile_id", profile.id)
       .maybeSingle()
+
+    // Token Idempotency Check: jika draft sudah ada dengan bahasa yang sama dan tidak dipaksa regenerate
+    if (!regenerate && existingApp?.cover_letter_draft && existingApp?.cover_letter_lang === selectedLang) {
+      return NextResponse.json({
+        success: true,
+        draft: existingApp.cover_letter_draft,
+        jobId: job.id,
+        cached: true,
+      })
+    }
 
     // 3. Susun Prompt Spesifik & Kontekstual (Strict Grounding, No Hallucination)
     const isEn = selectedLang === "en"
@@ -154,7 +164,7 @@ INSTRUKSI:
         temperature: 0.6,
         max_tokens: 1024
       }),
-      signal: AbortSignal.timeout(25000)
+      signal: AbortSignal.timeout(20000)
     })
 
     if (!groqRes.ok) {
@@ -188,6 +198,17 @@ INSTRUKSI:
       jobId: job.id
     })
   } catch (error: unknown) {
+    if (
+      error instanceof Error &&
+      (error.name === "TimeoutError" ||
+        error.name === "AbortError" ||
+        error.message.toLowerCase().includes("timeout"))
+    ) {
+      return NextResponse.json(
+        { error: "Layanan AI membutuhkan waktu terlalu lama (batas waktu 20 detik terlampaui). Silakan coba lagi." },
+        { status: 504 }
+      )
+    }
     console.error("Error generating cover letter:", error)
     return NextResponse.json(
       { error: "Terjadi kesalahan internal saat membuat cover letter." },

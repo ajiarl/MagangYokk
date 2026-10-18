@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { X, Loader2, Copy, Check } from "lucide-react"
+import { X, Loader2, Copy, Check, RotateCcw } from "lucide-react"
 
 export interface CoverLetterModalProps {
   job: (Job & { applicationStatus?: ApplicationStatus | null }) | null
@@ -23,7 +23,7 @@ export function CoverLetterModal({
   const [lang, setLang] = useState<"id" | "en">("id")
 
   const generateCoverLetter = useCallback(
-    async (targetJob: Job, selectedLang: "id" | "en") => {
+    async (targetJob: Job, selectedLang: "id" | "en", regenerate = false) => {
       setLoading(true)
       setDraft(null)
       setCopied(false)
@@ -32,7 +32,7 @@ export function CoverLetterModal({
         const res = await fetch("/api/cover-letter", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jobId: targetJob.id, lang: selectedLang })
+          body: JSON.stringify({ jobId: targetJob.id, lang: selectedLang, regenerate })
         })
         const data = (await res.json()) as { draft?: string; error?: string }
         if (data.draft) {
@@ -185,6 +185,15 @@ export function CoverLetterModal({
             Otomatis tersimpan ke status lamaran
           </span>
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              disabled={!draft || loading}
+              onClick={() => generateCoverLetter(job, lang, true)}
+              className="h-9 px-3.5 inline-flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-[#d0d6e0] font-medium rounded-lg transition-colors touch-manipulation active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
+              title="Buat ulang draf baru dengan AI (bypass cache)"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Buat Ulang</span>
+            </button>
             <button
               disabled={!draft || loading}
               onClick={handleCopy}

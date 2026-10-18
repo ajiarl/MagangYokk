@@ -16,7 +16,11 @@ if not SUPABASE_KEY:
                 if line.startswith("SUPABASE_SERVICE_ROLE_KEY="):
                     SUPABASE_KEY = line.strip().split("=", 1)[1]
                     break
-STATE_FILE = "C:/Users/acer/AppData/Local/hermes/data/internship_hunter/notified_jobs.json"
+DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+STATE_FILE = os.environ.get(
+    "TELEGRAM_STATE_FILE",
+    os.path.join(DEFAULT_DATA_DIR, "notified_jobs.json")
+)
 MIN_SCORE_THRESHOLD = 6.0
 
 def get_notified_job_ids():
@@ -52,6 +56,34 @@ def fetch_high_score_jobs():
         sys.stderr.write(f"Error fetching Supabase jobs: {e}\n")
         return []
 
+def chunk_message(text: str, max_chars: int = 3800) -> list[str]:
+    """
+    Memecah pesan panjang menjadi beberapa chunk aman (maksimal max_chars).
+    Menggunakan batas paragraf/blok lowongan ganda (\\n\\n) agar tidak membelah tag formatting Markdown.
+    """
+    if not text or len(text) <= max_chars:
+        return [text] if text else []
+
+    paragraphs = text.split("\n\n")
+    chunks = []
+    current_paragraphs = []
+    current_length = 0
+
+    for para in paragraphs:
+        para_len = len(para) + (2 if current_paragraphs else 0)
+        if current_length + para_len > max_chars and current_paragraphs:
+            chunks.append("\n\n".join(current_paragraphs).strip())
+            current_paragraphs = [para]
+            current_length = len(para)
+        else:
+            current_paragraphs.append(para)
+            current_length += para_len
+
+    if current_paragraphs:
+        chunks.append("\n\n".join(current_paragraphs).strip())
+
+    return chunks
+
 def format_telegram_alert(jobs_to_alert):
     if not jobs_to_alert:
         return ""
@@ -77,7 +109,7 @@ def format_telegram_alert(jobs_to_alert):
         else:
             target_badge = "🟡 Fresh Graduate / Wisuda"
 
-        lines.append(f"• **{title}** — *{company}*")
+        lines.append(f"• **{title}** - *{company}*")
         lines.append(f"  🎯 Match Score: `{score:.1f}/10` · {target_badge}")
         lines.append(f"  📍 Lokasi: {location}")
         lines.append(f"  🔗 [Buka & Lamar Lowongan]({url})")
@@ -102,7 +134,8 @@ def main():
         sample_job = max(jobs, key=lambda x: x.get("score") or 0)
         output = format_telegram_alert([sample_job])
         if output:
-            print(output)
+            for chunk in chunk_message(output, max_chars=3800):
+                print(chunk)
         return
 
     new_jobs = []
@@ -116,7 +149,8 @@ def main():
         save_notified_job_ids(notified_ids)
         output = format_telegram_alert(new_jobs)
         if output:
-            print(output)
+            for chunk in chunk_message(output, max_chars=3800):
+                print(chunk)
 
 if __name__ == "__main__":
     main()
