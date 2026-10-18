@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { recordAuditLog } from "@/lib/audit-trail"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 // @ts-expect-error pdf-parse-fork lacks bundled type definitions
 import pdfParse from "pdf-parse-fork"
@@ -89,6 +90,17 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString()
         })
         .eq("id", profile.id)
+
+      await recordAuditLog({
+        actionType: "RESUME_UPLOAD",
+        entityId: profile.id,
+        payloadSummary: {
+          fileName: file.name,
+          fileSize: file.size,
+          textLength: rawText.length,
+        },
+        rawIp: clientIp,
+      })
     }
 
     return NextResponse.json({

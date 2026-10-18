@@ -4,6 +4,7 @@ import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { supabase } from "@/lib/supabase"
 import { ApplicationStatus } from "@/lib/types"
+import { recordAuditLog } from "@/lib/audit-trail"
 
 const ALLOWED_STATUSES: readonly ApplicationStatus[] = [
   "saved",
@@ -118,6 +119,14 @@ export async function updateJobStatus(
       console.error("Gagal update status application:", error)
       return { success: false, error: error.message }
     }
+    const headerList = await headers()
+    const rawIp = headerList.get("x-forwarded-for")?.split(",")[0] || headerList.get("x-real-ip")
+    await recordAuditLog({
+      actionType: "STATUS_CHANGE",
+      entityId: trimmedJobId,
+      payloadSummary: { status },
+      rawIp,
+    })
 
     revalidatePath("/")
     return { success: true }
@@ -168,6 +177,14 @@ export async function updateApplicationNotes(
       console.error("Gagal update notes application:", error)
       return { success: false, error: error.message }
     }
+    const headerList = await headers()
+    const rawIp = headerList.get("x-forwarded-for")?.split(",")[0] || headerList.get("x-real-ip")
+    await recordAuditLog({
+      actionType: "NOTE_UPDATE",
+      entityId: trimmedJobId,
+      payloadSummary: { notesLength: validatedNotes.length },
+      rawIp,
+    })
 
     revalidatePath("/")
     return { success: true }

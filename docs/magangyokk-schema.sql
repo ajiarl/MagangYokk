@@ -226,6 +226,24 @@ insert into public.profiles (
   'Mahasiswa Sistem Informasi UIN Raden Fatah Palembang, aktif membangun web app menggunakan Next.js, Laravel, TypeScript, dan Supabase. Tertarik pada fullstack development dan sedang mencari magang remote atau di Palembang.'
 ) on conflict do nothing;
 
+-- ────────────────────────────────────────────────────────────
+-- 7. AUDIT TRAIL UNTUK TINDAKAN SENSITIF
+-- ────────────────────────────────────────────────────────────
+create table if not exists public.audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  action_type text not null, -- 'STATUS_CHANGE', 'NOTE_UPDATE', 'RESUME_UPLOAD'
+  entity_id text not null,   -- job_id atau profile_id
+  payload_summary jsonb,     -- ringkasan metadata aman (bebas PII)
+  ip_hash text,              -- SHA-256 hashed IP untuk pseudonimisasi
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_audit_logs_created_at on public.audit_logs (created_at desc);
+create index if not exists idx_audit_logs_action_type on public.audit_logs (action_type);
+
+alter table public.audit_logs enable row level security;
+grant select, insert on public.audit_logs to service_role;
+
 -- ============================================================
 -- Verifikasi:
 --   select table_name from information_schema.tables

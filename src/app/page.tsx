@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { MessageSquarePlus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
@@ -120,7 +121,7 @@ export default async function Home() {
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#08090a]/90 backdrop-blur-md">
         <div className="w-full px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-semibold text-[13px] tracking-tight text-[#f7f8f8]">MagangYokk</span>
+            <h1 className="font-semibold text-[13px] tracking-tight text-[#f7f8f8]">MagangYokk</h1>
             <span className="text-[11px] font-mono text-[#8a8f98]">/</span>
             <span className="text-xs text-[#8a8f98] font-mono">{jobsWithApps.length} opportunities</span>
           </div>
@@ -167,6 +168,15 @@ export default async function Home() {
             <Link href="/terms" className="hover:text-white transition-colors">
               Syarat & Ketentuan
             </Link>
+            <a
+              href="https://github.com/ajiarlando/magangyokk/issues/new?title=%5BFeedback%2FBug%5D+&labels=feedback"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#8a8f98] hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              <MessageSquarePlus className="w-3.5 h-3.5" />
+              <span>Kritik & Saran / Lapor Bug</span>
+            </a>
           </div>
         </div>
       </footer>
