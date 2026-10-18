@@ -57,7 +57,7 @@ export function GapAnalysisModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
       <div
-        className="w-full sm:max-w-xl max-h-[90vh] sm:max-h-[85vh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+        className="w-full sm:max-w-xl max-h-[85dvh] sm:max-h-[85dvh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Handle Indicator */}
@@ -75,7 +75,8 @@ export function GapAnalysisModal({
           </div>
           <button
             onClick={onClose}
-            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
+            aria-label="Tutup modal analisis kecocokan"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -93,7 +94,7 @@ export function GapAnalysisModal({
               </p>
               <button
                 onClick={handleAnalyze}
-                className="h-9 px-4 inline-flex items-center justify-center rounded-xl text-xs font-mono font-medium bg-emerald-500 hover:bg-emerald-400 text-black transition-all shadow-sm active:scale-95 touch-manipulation"
+                className="h-9 px-4 inline-flex items-center justify-center rounded-xl text-xs font-mono font-medium bg-emerald-500 hover:bg-emerald-400 text-black transition-all shadow-sm active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
               >
                 Mulai Analisis Kecocokan
               </button>
@@ -209,7 +210,7 @@ export function GapAnalysisModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-4 inline-flex items-center justify-center rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
+            className="h-9 px-4 inline-flex items-center justify-center rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             Tutup
           </button>

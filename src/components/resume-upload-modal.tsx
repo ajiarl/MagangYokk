@@ -54,7 +54,7 @@ export function ResumeUploadModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
       <div
-        className="w-full sm:max-w-md max-h-[90vh] sm:max-h-[85vh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+        className="w-full sm:max-w-md max-h-[85dvh] sm:max-h-[85dvh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Handle Indicator */}
@@ -71,7 +71,8 @@ export function ResumeUploadModal({
           </div>
           <button
             onClick={onClose}
-            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
+            aria-label="Tutup modal unggah resume"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -80,8 +81,17 @@ export function ResumeUploadModal({
         {/* Dropzone area Body */}
         <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
           <div
+            tabIndex={0}
+            role="button"
+            aria-label="Pilih file PDF resume"
             onClick={() => fileInputRef.current?.click()}
-            className="cursor-pointer border-2 border-dashed border-white/[0.08] hover:border-[#5e6ad2]/50 rounded-2xl p-6 text-center space-y-2 bg-[#08090a] transition-all"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                fileInputRef.current?.click()
+              }
+            }}
+            className="cursor-pointer border-2 border-dashed border-white/[0.08] hover:border-[#5e6ad2]/50 rounded-2xl p-6 text-center space-y-2 bg-[#08090a] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             <input
               type="file"
@@ -120,7 +130,7 @@ export function ResumeUploadModal({
               type="checkbox"
               checked={consentGiven}
               onChange={(e) => setConsentGiven(e.target.checked)}
-              className="mt-0.5 rounded border-white/20 bg-white/5 text-[#5e6ad2] focus:ring-[#5e6ad2] focus:ring-offset-0"
+              className="mt-0.5 rounded border-white/20 bg-white/5 text-[#5e6ad2] focus:ring-[#5e6ad2] focus:ring-offset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
             />
             <span>
               Saya menyetujui pemrosesan data CV saya untuk analisis kesenjangan skill dan pembuatan surat lamaran via Groq Cloud (AS) sesuai{" "}
@@ -149,7 +159,7 @@ export function ResumeUploadModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-3.5 inline-flex items-center justify-center rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
+            className="h-9 px-3.5 inline-flex items-center justify-center rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             Batal
           </button>
@@ -157,7 +167,7 @@ export function ResumeUploadModal({
             type="button"
             disabled={!file || !consentGiven || uploading}
             onClick={handleUpload}
-            className="h-9 px-4 inline-flex items-center gap-1.5 rounded-lg text-xs font-mono font-medium bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white transition-all shadow-sm active:scale-95 touch-manipulation disabled:opacity-40"
+            className="h-9 px-4 inline-flex items-center gap-1.5 rounded-lg text-xs font-mono font-medium bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white transition-all shadow-sm active:scale-95 touch-manipulation disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             {uploading ? (
               <>

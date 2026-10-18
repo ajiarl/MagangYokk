@@ -110,7 +110,7 @@ export function CoverLetterModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+        className="w-full sm:max-w-2xl max-h-[85dvh] sm:max-h-[85dvh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
       >
         {/* Mobile Drag Handle Indicator */}
         <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mt-2.5 sm:hidden shrink-0" />
@@ -125,8 +125,8 @@ export function CoverLetterModal({
           </div>
           <button
             onClick={onClose}
-            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
-            aria-label="Tutup modal"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
+            aria-label="Tutup modal cover letter"
           >
             <X className="w-4 h-4" />
           </button>
@@ -139,7 +139,7 @@ export function CoverLetterModal({
             <button
               disabled={loading}
               onClick={() => generateCoverLetter(job, "id")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 lang === "id"
                   ? "bg-[#5e6ad2] text-white shadow-sm"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
@@ -150,7 +150,7 @@ export function CoverLetterModal({
             <button
               disabled={loading}
               onClick={() => generateCoverLetter(job, "en")}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 lang === "en"
                   ? "bg-[#5e6ad2] text-white shadow-sm"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
@@ -188,14 +188,14 @@ export function CoverLetterModal({
             <button
               disabled={!draft || loading}
               onClick={handleCopy}
-              className="h-9 px-3.5 inline-flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-[#d0d6e0] font-medium rounded-lg transition-colors touch-manipulation active:scale-95 disabled:opacity-50"
+              className="h-9 px-3.5 inline-flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-[#d0d6e0] font-medium rounded-lg transition-colors touch-manipulation active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copied ? "Tersalin!" : "Salin Surat"}</span>
             </button>
             <button
               onClick={onClose}
-              className="h-9 px-4 inline-flex items-center bg-[#5e6ad2] hover:bg-[#7170ff] text-white text-xs font-medium rounded-lg transition-colors touch-manipulation active:scale-95"
+              className="h-9 px-4 inline-flex items-center bg-[#5e6ad2] hover:bg-[#7170ff] text-white text-xs font-medium rounded-lg transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
             >
               Selesai
             </button>

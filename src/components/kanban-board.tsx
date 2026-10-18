@@ -175,8 +175,8 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
                   </div>
 
                   {/* Mobile Status Move Buttons */}
-                  <div className="md:hidden pt-2 border-t border-white/[0.04] flex items-center gap-1 overflow-x-auto scrollbar-none">
-                    <span className="text-[9px] font-mono text-[#8a8f98] shrink-0">Pindah:</span>
+                  <div className="md:hidden py-1 border-t border-white/[0.04] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                    <span className="text-[10.5px] font-mono font-medium text-[#8a8f98] shrink-0">Pindah:</span>
                     {COLUMNS.filter((c) => c.id !== col.id).map((targetCol) => (
                       <button
                         key={targetCol.id}
@@ -185,7 +185,8 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
                           e.stopPropagation()
                           onStatusChange(job.id, targetCol.id)
                         }}
-                        className="text-[10px] font-mono px-2 py-1 rounded border border-white/[0.08] text-[#8a8f98] hover:text-white hover:bg-white/[0.08] transition-colors whitespace-nowrap active:scale-95 touch-manipulation"
+                        aria-label={`Pindahkan status lamaran ke ${targetCol.title}`}
+                        className="min-h-[32px] px-2.5 inline-flex items-center text-[11px] font-mono rounded-md border border-white/[0.08] text-[#8a8f98] hover:text-white hover:bg-white/[0.08] transition-colors whitespace-nowrap active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
                       >
                         → {targetCol.title}
                       </button>
@@ -207,7 +208,8 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
                           e.stopPropagation()
                           setActiveGapJob(job)
                         }}
-                        className="h-7 w-7 inline-flex items-center justify-center rounded text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors touch-manipulation active:scale-95"
+                        aria-label="Analisis kecocokan CV"
+                        className="h-7 w-7 inline-flex items-center justify-center rounded text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
                         title="Analisis Kecocokan CV"
                       >
                         <Target className="w-3.5 h-3.5" />
@@ -220,7 +222,8 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
                           e.stopPropagation()
                           setActiveNotesJob(job)
                         }}
-                        className={`h-7 w-7 inline-flex items-center justify-center rounded transition-colors relative touch-manipulation active:scale-95 ${
+                        aria-label={job.applicationNotes ? "Buka catatan lamaran, ada catatan tersimpan" : "Buka catatan lamaran"}
+                        className={`h-7 w-7 inline-flex items-center justify-center rounded transition-colors relative touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a] ${
                           job.applicationNotes
                             ? "text-[#5e6ad2] bg-[#5e6ad2]/15 hover:bg-[#5e6ad2]/25"
                             : "text-[#8a8f98] hover:text-white hover:bg-white/[0.05]"
@@ -238,7 +241,8 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="h-7 px-2 inline-flex items-center justify-center rounded text-[#8a8f98] hover:text-[#5e6ad2] gap-0.5 transition-colors touch-manipulation active:scale-95"
+                        aria-label="Kunjungi sumber lowongan asli di tab baru"
+                        className="h-7 px-2 inline-flex items-center justify-center rounded text-[#8a8f98] hover:text-[#5e6ad2] gap-0.5 transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
                         title="Buka lowongan asli"
                       >
                         <span>Lamar</span>
@@ -267,7 +271,7 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
               key={col.id}
               type="button"
               onClick={() => setActiveMobileCol(col.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all shrink-0 touch-manipulation active:scale-95 ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all shrink-0 touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a] ${
                 isActive
                   ? "bg-white/[0.1] text-white border-white/[0.2] shadow-sm"
                   : "text-[#8a8f98] bg-[#0c0d0e] border-white/[0.06] hover:bg-white/[0.04]"

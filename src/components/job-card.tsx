@@ -116,7 +116,7 @@ export function JobCard({
               matched ? (
                 <span
                   key={skill}
-                  className="bg-white/[0.02] text-[#8a8f98] border border-white/[0.05] text-[9px] px-1.5 py-0.2 rounded font-mono"
+                  className="bg-white/[0.02] text-[#8a8f98] border border-white/[0.05] text-[10.5px] px-2 py-0.5 rounded-md font-mono font-medium"
                 >
                   {skill.replace("_", " ")}
                 </span>
@@ -137,7 +137,8 @@ export function JobCard({
               if (val) handleStatusChange(val)
             }}
             disabled={isPending}
-            className="h-9 sm:h-8 appearance-none bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-[11px] font-mono text-[#d0d6e0] rounded-lg px-2.5 pr-6 cursor-pointer focus:outline-none focus:border-white/[0.2] transition-colors touch-manipulation"
+            aria-label="Pilih status lamaran"
+            className="h-9 sm:h-8 appearance-none bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-[11px] font-mono text-[#d0d6e0] rounded-lg px-2.5 pr-6 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a] transition-colors touch-manipulation"
           >
             <option value="" disabled className="bg-[#0b0c0d] text-[#8a8f98]">Status...</option>
             <option value="saved" className="bg-[#0b0c0d]">Disimpan</option>
@@ -146,7 +147,7 @@ export function JobCard({
             <option value="offered" className="bg-[#0b0c0d]">Penawaran</option>
             <option value="rejected" className="bg-[#0b0c0d]">Ditolak</option>
           </select>
-          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8a8f98] text-[9px]">
+          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8a8f98] text-[10px]">
             ▾
           </div>
         </div>
@@ -156,7 +157,8 @@ export function JobCard({
           <button
             type="button"
             onClick={() => onOpenGap?.(job)}
-            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors touch-manipulation active:scale-95"
+            aria-label="Analisis kecocokan CV"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
             title="Analisis Kecocokan CV"
           >
             <Target className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
@@ -166,7 +168,8 @@ export function JobCard({
           <button
             type="button"
             onClick={() => onOpenNotes?.(job)}
-            className={`h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg transition-colors relative touch-manipulation active:scale-95 ${
+            aria-label={hasNotes ? "Buka catatan lamaran, ada catatan tersimpan" : "Buka catatan lamaran"}
+            className={`h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg transition-colors relative touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a] ${
               hasNotes
                 ? "text-[#d0d6e0] bg-white/[0.08]"
                 : "text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04]"
@@ -184,7 +187,8 @@ export function JobCard({
             href={job.url}
             target="_blank"
             rel="noreferrer"
-            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04] transition-colors touch-manipulation active:scale-95"
+            aria-label="Kunjungi sumber lowongan asli di tab baru"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
             title="Buka Lowongan Asli"
           >
             <ArrowUpRight className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
@@ -194,7 +198,7 @@ export function JobCard({
           <button
             type="button"
             onClick={() => onOpenCoverLetter?.(job)}
-            className="h-9 sm:h-8 inline-flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-[#f7f8f8] text-[11px] font-mono px-3 rounded-lg transition-all active:scale-95 touch-manipulation"
+            className="h-9 sm:h-8 inline-flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-[#f7f8f8] text-[11px] font-mono px-3 rounded-lg transition-all active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             <Sparkles className="w-3 h-3 text-[#8a8f98]" />
             <span>Cover Letter</span>

@@ -27,7 +27,7 @@ export function StatusFilter({ currentFilter, counts, onFilterChange }: StatusFi
           <button
             key={tab.id}
             onClick={() => onFilterChange(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all whitespace-nowrap border touch-manipulation active:scale-95 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all whitespace-nowrap border touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a] ${
               isActive
                 ? "bg-white/[0.08] text-white border-white/[0.16] font-medium"
                 : "bg-transparent text-[#8a8f98] hover:text-[#d0d6e0] hover:bg-white/[0.03] border-transparent"

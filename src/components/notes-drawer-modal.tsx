@@ -49,7 +49,7 @@ export function NotesDrawerModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
       <div
-        className="w-full sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+        className="w-full sm:max-w-lg max-h-[85dvh] sm:max-h-[85dvh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Handle Indicator */}
@@ -67,7 +67,8 @@ export function NotesDrawerModal({
           </div>
           <button
             onClick={onClose}
-            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
+            aria-label="Tutup modal catatan lamaran"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -84,7 +85,7 @@ export function NotesDrawerModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Contoh: Udah kirim email ke HR Mas Dimas (hr@perusahaan.com). Interview tahap 1 dijadwalkan Rabu 14:00 WIB via Google Meet."
               rows={6}
-              className="w-full bg-[#08090a] border border-white/[0.08] focus:border-[#5e6ad2] rounded-xl p-3 text-xs text-[#f7f8f8] placeholder-[#8a8f98] outline-none transition-colors resize-none leading-relaxed"
+              className="w-full bg-[#08090a] border border-white/[0.08] rounded-xl p-3 text-xs text-[#f7f8f8] placeholder-[#8a8f98] transition-colors resize-none leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a]"
             />
           </div>
         </div>
@@ -94,7 +95,7 @@ export function NotesDrawerModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-3.5 inline-flex items-center justify-center rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
+            className="h-9 px-3.5 inline-flex items-center justify-center rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             Batal
           </button>
@@ -102,7 +103,7 @@ export function NotesDrawerModal({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-9 px-4 inline-flex items-center gap-1.5 rounded-lg text-xs font-mono font-medium bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white transition-all shadow-sm active:scale-95 touch-manipulation disabled:opacity-50"
+            className="h-9 px-4 inline-flex items-center gap-1.5 rounded-lg text-xs font-mono font-medium bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white transition-all shadow-sm active:scale-95 touch-manipulation disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             {isSaving ? (
               <>

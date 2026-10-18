@@ -135,7 +135,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             placeholder="Filter posisi atau perusahaan..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/[0.03] hover:bg-white/[0.05] focus:bg-[#0c0d0e] border border-white/[0.08] focus:border-white/[0.2] text-xs text-[#f7f8f8] placeholder-[#8a8f98] rounded-lg pl-8.5 pr-3 py-2 outline-none transition-all font-mono touch-manipulation"
+            className="w-full bg-white/[0.03] hover:bg-white/[0.05] focus:bg-[#0c0d0e] border border-white/[0.08] focus:border-white/[0.2] text-xs text-[#f7f8f8] placeholder-[#8a8f98] rounded-lg pl-8.5 pr-3 py-2 transition-all font-mono touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a]"
           />
         </div>
 
@@ -145,7 +145,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
           <div className="inline-flex rounded-lg border border-white/[0.08] p-0.5 bg-white/[0.02]">
             <button
               onClick={() => setEduTarget("all")}
-              className={`px-2.5 py-1 text-[11px] rounded transition-all ${
+              className={`px-2.5 py-1 text-[11px] rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 eduTarget === "all"
                   ? "bg-white/[0.1] text-white font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
@@ -155,7 +155,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             </button>
             <button
               onClick={() => setEduTarget("intern")}
-              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 eduTarget === "intern"
                   ? "bg-emerald-500/20 text-emerald-300 font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
@@ -166,7 +166,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             </button>
             <button
               onClick={() => setEduTarget("freshgrad")}
-              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 eduTarget === "freshgrad"
                   ? "bg-amber-500/20 text-amber-300 font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
@@ -183,7 +183,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
           <div className="inline-flex rounded-lg border border-white/[0.08] p-0.5 bg-white/[0.02]">
             <button
               onClick={() => setViewMode("feed")}
-              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 viewMode === "feed"
                   ? "bg-white/[0.1] text-white font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
@@ -194,7 +194,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             </button>
             <button
               onClick={() => setViewMode("kanban")}
-              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 viewMode === "kanban"
                   ? "bg-white/[0.1] text-white font-medium"
                   : "text-[#8a8f98] hover:text-[#d0d6e0]"
@@ -211,7 +211,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
           <button
             type="button"
             onClick={() => setIsResumeModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-lg border border-white/[0.08] hover:border-white/[0.2] bg-white/[0.02] hover:bg-white/[0.06] text-[#d0d6e0] transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-lg border border-white/[0.08] hover:border-white/[0.2] bg-white/[0.02] hover:bg-white/[0.06] text-[#d0d6e0] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             <Upload className="w-3 h-3 text-[#8a8f98]" />
             <span>CV</span>
@@ -228,7 +228,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             <button
               key={tech}
               onClick={() => setSelectedTech(isSelected ? null : tech)}
-              className={`px-2 py-0.5 rounded transition-all shrink-0 ${
+              className={`px-2 py-0.5 rounded transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 isSelected
                   ? "bg-white/[0.12] text-white border border-white/[0.2]"
                   : "text-[#8a8f98] hover:text-white bg-transparent hover:bg-white/[0.04]"
@@ -241,7 +241,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
         {selectedTech && (
           <button
             onClick={() => setSelectedTech(null)}
-            className="text-[10px] text-rose-400 hover:text-rose-300 ml-1 underline"
+            className="text-[10px] text-rose-400 hover:text-rose-300 ml-1 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] rounded"
           >
             reset
           </button>
