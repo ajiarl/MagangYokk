@@ -1,6 +1,5 @@
 "use client"
 
-import { ApplicationStatus } from "@/lib/types"
 
 interface StatusFilterProps {
   currentFilter: string
@@ -11,9 +10,9 @@ interface StatusFilterProps {
 const TABS: { id: string; label: string }[] = [
   { id: "all", label: "Semua" },
   { id: "saved", label: "Disimpan" },
-  { id: "applied", label: "Dilamar" },
+  { id: "applied", label: "Sudah Dilamar" },
   { id: "interview", label: "Interview" },
-  { id: "offered", label: "Offered" },
+  { id: "offered", label: "Penawaran" },
   { id: "rejected", label: "Ditolak" }
 ]
 
@@ -28,7 +27,7 @@ export function StatusFilter({ currentFilter, counts, onFilterChange }: StatusFi
           <button
             key={tab.id}
             onClick={() => onFilterChange(tab.id)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-all whitespace-nowrap border ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all whitespace-nowrap border touch-manipulation active:scale-95 ${
               isActive
                 ? "bg-white/[0.08] text-white border-white/[0.16] font-medium"
                 : "bg-transparent text-[#8a8f98] hover:text-[#d0d6e0] hover:bg-white/[0.03] border-transparent"
@@ -36,10 +35,10 @@ export function StatusFilter({ currentFilter, counts, onFilterChange }: StatusFi
           >
             <span>{tab.label}</span>
             <span
-              className={`text-[10px] px-1 py-0.2 rounded ${
+              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                 isActive
                   ? "bg-white/[0.12] text-white"
-                  : "bg-white/[0.04] text-[#62666d]"
+                  : "bg-white/[0.04] text-[#8a8f98]"
               }`}
             >
               {count}

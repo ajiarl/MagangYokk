@@ -83,14 +83,15 @@ Analisis kesesuaian profil dan keluarkan JSON valid sekarang:`
         Authorization: `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "qwen/qwen3.8-27b",
+        model: "llama-3.3-70b-versatile",
         temperature: 0.2,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ]
-      })
+      }),
+      signal: AbortSignal.timeout(25000)
     })
 
     if (!groqRes.ok) {

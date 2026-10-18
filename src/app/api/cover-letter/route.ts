@@ -50,6 +50,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // 2b. Ambil status aplikasi eksisting (jika sudah pernah apply/melamar)
+    const { data: existingApp } = await supabase
+      .from("applications")
+      .select("status")
+      .eq("job_id", job.id)
+      .eq("profile_id", profile.id)
+      .maybeSingle()
+
     // 3. Susun Prompt Spesifik & Kontekstual (Strict Grounding, No Hallucination)
     const isEn = lang === "en"
     const systemPrompt = isEn
@@ -106,14 +114,15 @@ INSTRUKSI:
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "qwen/qwen3.8-27b",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
         temperature: 0.6,
         max_tokens: 1024
-      })
+      }),
+      signal: AbortSignal.timeout(25000)
     })
 
     if (!groqRes.ok) {
@@ -133,7 +142,7 @@ INSTRUKSI:
       {
         job_id: job.id,
         profile_id: profile.id,
-        status: "saved",
+        status: existingApp?.status ?? "saved",
         cover_letter_draft: draft,
         cover_letter_lang: lang,
         updated_at: new Date().toISOString()

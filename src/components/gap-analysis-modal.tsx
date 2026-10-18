@@ -47,21 +47,24 @@ export function GapAnalysisModal({
         throw new Error(result.error || "Gagal memproses analisis.")
       }
       setData(result.analysis)
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      setError(message)
       setLoading(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in-0 duration-150">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
       <div
-        className="w-full max-w-xl rounded-2xl bg-[#0c0d0e] border border-white/[0.08] shadow-2xl p-6 space-y-5 text-left max-h-[90vh] flex flex-col overflow-hidden"
+        className="w-full sm:max-w-xl max-h-[90vh] sm:max-h-[85vh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Drag Handle Indicator */}
+        <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mt-2.5 sm:hidden shrink-0" />
+
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-white/[0.06] pb-3 shrink-0">
+        <div className="p-4 sm:px-6 border-b border-white/[0.06] flex items-start justify-between gap-3 shrink-0">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400">
               <Target className="w-3.5 h-3.5" />
@@ -72,14 +75,14 @@ export function GapAnalysisModal({
           </div>
           <button
             onClick={onClose}
-            className="text-[#8a8f98] hover:text-white p-1 rounded-lg hover:bg-white/[0.05] transition-colors"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 pr-2">
           {!data && !loading && (
             <div className="py-12 text-center space-y-3">
               <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-400">
@@ -90,7 +93,7 @@ export function GapAnalysisModal({
               </p>
               <button
                 onClick={handleAnalyze}
-                className="px-4 py-2 rounded-xl text-xs font-mono font-medium bg-emerald-500 hover:bg-emerald-400 text-black transition-all shadow-sm active:scale-95"
+                className="h-9 px-4 inline-flex items-center justify-center rounded-xl text-xs font-mono font-medium bg-emerald-500 hover:bg-emerald-400 text-black transition-all shadow-sm active:scale-95 touch-manipulation"
               >
                 Mulai Analisis Kecocokan
               </button>
@@ -201,12 +204,12 @@ export function GapAnalysisModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] shrink-0 text-[11px] font-mono text-[#62666d]">
+        <div className="p-4 sm:px-6 border-t border-white/[0.06] bg-[#08090a] flex items-center justify-between shrink-0 text-[11px] font-mono text-[#8a8f98]">
           <span>Grounded ke Profil Aji di Supabase</span>
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors"
+            className="h-9 px-4 inline-flex items-center justify-center rounded-lg text-xs font-mono text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
           >
             Tutup
           </button>

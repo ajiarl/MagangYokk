@@ -6,7 +6,19 @@ import { JobCard } from "@/components/job-card"
 import { KanbanBoard } from "@/components/kanban-board"
 import { StatusFilter } from "@/components/status-filter"
 import { ResumeUploadModal } from "@/components/resume-upload-modal"
-import { Search, SlidersHorizontal, RefreshCw, LayoutGrid, Columns3, Upload, Briefcase, GraduationCap, Kanban } from "lucide-react"
+import { NotesDrawerModal } from "@/components/notes-drawer-modal"
+import { GapAnalysisModal } from "@/components/gap-analysis-modal"
+import {
+  Search,
+  RefreshCw,
+  LayoutGrid,
+  Upload,
+  Kanban,
+  X,
+  Loader2,
+  Copy,
+  Check
+} from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 
 interface JobFeedClientProps {
@@ -25,11 +37,20 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
   const [selectedTech, setSelectedTech] = useState<string | null>(null)
   const [eduTarget, setEduTarget] = useState<EducationTarget>("all")
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
+  const [coverLetterJob, setCoverLetterJob] = useState<Job | null>(null)
+  const [coverLetterLoading, setCoverLetterLoading] = useState(false)
+  const [coverLetterDraft, setCoverLetterDraft] = useState<string | null>(null)
+  const [coverLetterCopied, setCoverLetterCopied] = useState(false)
+  const [coverLetterLang, setCoverLetterLang] = useState<"id" | "en">("id")
+  const [activeGapJob, setActiveGapJob] = useState<Job | null>(null)
+  const [activeNotesJob, setActiveNotesJob] = useState<(Job & { applicationNotes?: string | null }) | null>(null)
 
   const [jobs, setJobs] = useState(initialJobs)
   const [, startTransition] = useTransition()
 
   function handleStatusChange(jobId: string, newStatus: ApplicationStatus) {
+    const previousStatus = jobs.find((j) => j.id === jobId)?.applicationStatus
+
     setJobs((prev) =>
       prev.map((j) =>
         j.id === jobId ? { ...j, applicationStatus: newStatus } : j
@@ -40,7 +61,11 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
       const res = await updateJobStatus(jobId, newStatus)
       if (!res.success) {
         alert("Gagal update status: " + res.error)
-        setJobs(initialJobs)
+        setJobs((prev) =>
+          prev.map((j) =>
+            j.id === jobId ? { ...j, applicationStatus: previousStatus } : j
+          )
+        )
       }
     })
   }
@@ -51,6 +76,46 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
         j.id === jobId ? { ...j, applicationNotes: newNotes } : j
       )
     )
+  }
+  async function handleGenerateCoverLetter(job: Job, selectedLang: "id" | "en") {
+    setCoverLetterLoading(true)
+    setCoverLetterLang(selectedLang)
+    try {
+      const res = await fetch("/api/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId: job.id, lang: selectedLang })
+      })
+      const data = (await res.json()) as { draft?: string; error?: string }
+      if (data.draft) {
+        setCoverLetterDraft(data.draft)
+        const currentJob = jobs.find((j) => j.id === job.id)
+        if (!currentJob?.applicationStatus) {
+          handleStatusChange(job.id, "saved")
+        }
+      } else {
+        alert(data.error || "Gagal generate cover letter")
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      alert("Error: " + message)
+    } finally {
+      setCoverLetterLoading(false)
+    }
+  }
+
+  function handleOpenCoverLetter(job: Job) {
+    setCoverLetterJob(job)
+    setCoverLetterDraft(null)
+    setCoverLetterCopied(false)
+    handleGenerateCoverLetter(job, "id")
+  }
+
+  function handleCopyCoverLetter() {
+    if (!coverLetterDraft) return
+    navigator.clipboard.writeText(coverLetterDraft)
+    setCoverLetterCopied(true)
+    setTimeout(() => setCoverLetterCopied(false), 2000)
   }
 
   // Deteksi target loker: Magang Mahasiswa vs Fresh Graduate / Wisuda
@@ -142,13 +207,13 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-white/[0.06]">
         {/* Search Input (Frameless & Fast) */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#62666d]" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#8a8f98]" />
           <input
             type="text"
             placeholder="Filter posisi atau perusahaan..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/[0.03] hover:bg-white/[0.05] focus:bg-[#0c0d0e] border border-white/[0.08] focus:border-white/[0.2] text-xs text-[#f7f8f8] placeholder-[#62666d] rounded-lg pl-8.5 pr-3 py-1.5 outline-none transition-all font-mono"
+            className="w-full bg-white/[0.03] hover:bg-white/[0.05] focus:bg-[#0c0d0e] border border-white/[0.08] focus:border-white/[0.2] text-xs text-[#f7f8f8] placeholder-[#8a8f98] rounded-lg pl-8.5 pr-3 py-2 outline-none transition-all font-mono touch-manipulation"
           />
         </div>
 
@@ -234,7 +299,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
 
       {/* Tech Stack Horizontal Filter Strip */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px] font-mono">
-        <span className="text-[#62666d] shrink-0 mr-1">Stack:</span>
+        <span className="text-[#8a8f98] shrink-0 mr-1">Stack:</span>
         {TECH_TAGS.map((tech) => {
           const isSelected = selectedTech === tech
           return (
@@ -285,11 +350,24 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
 
           {/* Feed Grid */}
           {filteredJobs.length === 0 ? (
-            <div className="text-center py-20 border border-dashed border-white/[0.08] rounded-2xl p-8 space-y-2 bg-[#0f1011]/40">
+            <div className="text-center py-16 sm:py-20 border border-dashed border-white/[0.08] rounded-2xl p-6 sm:p-8 space-y-3 bg-[#0f1011]/40">
               <p className="text-sm font-medium text-[#d0d6e0]">Tidak ada lowongan yang cocok</p>
               <p className="text-xs text-[#8a8f98] max-w-sm mx-auto">
                 Coba ganti filter target posisi (Magang Mahasiswa / Fresh Graduate) atau bersihkan kata kunci pencarian.
               </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("")
+                  setSelectedTech(null)
+                  setEduTarget("all")
+                  setFilter("all")
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-xs font-mono text-white transition-all active:scale-95 touch-manipulation cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#8a8f98]" />
+                <span>Reset Semua Filter</span>
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -300,18 +378,145 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
                   initialStatus={job.applicationStatus}
                   initialNotes={job.applicationNotes}
                   onStatusChange={(status) => handleStatusChange(job.id, status)}
-                  onNotesChange={(notes) => handleNotesChange(job.id, notes)}
+                  onOpenCoverLetter={handleOpenCoverLetter}
+                  onOpenGap={(j) => setActiveGapJob(j)}
+                  onOpenNotes={(j) => setActiveNotesJob(j)}
                 />
               ))}
             </div>
           )}
         </div>
       )}
+
       {/* Modal Upload CV PDF */}
       <ResumeUploadModal
         isOpen={isResumeModalOpen}
         onClose={() => setIsResumeModalOpen(false)}
       />
+
+      {/* Modal Gap Analysis */}
+      {activeGapJob && (
+        <GapAnalysisModal
+          jobId={activeGapJob.id}
+          jobTitle={activeGapJob.title}
+          company={activeGapJob.company}
+          isOpen={!!activeGapJob}
+          onClose={() => setActiveGapJob(null)}
+        />
+      )}
+
+      {/* Modal Edit Notes */}
+      {activeNotesJob && (
+        <NotesDrawerModal
+          jobId={activeNotesJob.id}
+          jobTitle={activeNotesJob.title}
+          company={activeNotesJob.company}
+          initialNotes={activeNotesJob.applicationNotes || null}
+          isOpen={!!activeNotesJob}
+          onClose={() => setActiveNotesJob(null)}
+          onSaveNotes={(savedNotes) => {
+            handleNotesChange(activeNotesJob.id, savedNotes)
+            setActiveNotesJob(null)
+          }}
+        />
+      )}
+
+      {/* Cover Letter Drafter Modal (Hybrid Bottom-Sheet) */}
+      {coverLetterJob && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-[#0c0d0e] border-t sm:border border-white/[0.1] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+          >
+            {/* Mobile Drag Handle Indicator */}
+            <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mt-2.5 sm:hidden shrink-0" />
+
+            {/* Modal Header */}
+            <div className="p-4 sm:px-6 border-b border-white/[0.06] flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="font-semibold text-sm text-white">Cover Letter Drafter</h3>
+                <p className="text-xs text-[#8a8f98] mt-0.5 line-clamp-1">{coverLetterJob.title} • {coverLetterJob.company}</p>
+              </div>
+              <button
+                onClick={() => setCoverLetterJob(null)}
+                className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-white hover:bg-white/[0.05] transition-colors touch-manipulation active:scale-95"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Language Switcher */}
+            <div className="px-4 sm:px-6 py-2.5 bg-[#08090a] border-b border-white/[0.05] flex items-center justify-between text-xs shrink-0">
+              <span className="text-[#8a8f98] text-[11px] font-mono">Bahasa Draft:</span>
+              <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
+                <button
+                  disabled={coverLetterLoading}
+                  onClick={() => handleGenerateCoverLetter(coverLetterJob, "id")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 ${
+                    coverLetterLang === "id"
+                      ? "bg-[#5e6ad2] text-white shadow-sm"
+                      : "text-[#8a8f98] hover:text-[#d0d6e0]"
+                  }`}
+                >
+                  Bahasa Indonesia
+                </button>
+                <button
+                  disabled={coverLetterLoading}
+                  onClick={() => handleGenerateCoverLetter(coverLetterJob, "en")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all touch-manipulation active:scale-95 ${
+                    coverLetterLang === "en"
+                      ? "bg-[#5e6ad2] text-white shadow-sm"
+                      : "text-[#8a8f98] hover:text-[#d0d6e0]"
+                  }`}
+                >
+                  English
+                </button>
+              </div>
+            </div>
+
+            {/* Text Preview Area */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
+              {coverLetterLoading ? (
+                <div className="py-20 text-center space-y-3">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#7170ff]" />
+                  <p className="text-xs text-[#8a8f98]">Menyusun draf autentik berbasis profil kamu...</p>
+                </div>
+              ) : coverLetterDraft ? (
+                <div className="bg-[#08090a] p-4 sm:p-5 rounded-xl border border-white/[0.06] text-xs font-mono leading-relaxed whitespace-pre-wrap text-[#d0d6e0] selection:bg-[#5e6ad2]/30">
+                  {coverLetterDraft}
+                </div>
+              ) : (
+                <div className="py-16 text-center text-xs text-[#8a8f98]">
+                  Pilih bahasa di atas untuk memuat draf surat.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:px-6 border-t border-white/[0.06] bg-[#08090a] flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-[#8a8f98] font-mono hidden sm:inline">
+                Otomatis tersimpan ke status lamaran
+              </span>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  disabled={!coverLetterDraft || coverLetterLoading}
+                  onClick={handleCopyCoverLetter}
+                  className="h-9 px-3.5 inline-flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-[#d0d6e0] font-medium rounded-lg transition-colors touch-manipulation active:scale-95 disabled:opacity-50"
+                >
+                  {coverLetterCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{coverLetterCopied ? "Tersalin!" : "Salin Surat"}</span>
+                </button>
+                <button
+                  onClick={() => setCoverLetterJob(null)}
+                  className="h-9 px-4 inline-flex items-center bg-[#5e6ad2] hover:bg-[#7170ff] text-white text-xs font-medium rounded-lg transition-colors touch-manipulation active:scale-95"
+                >
+                  Selesai
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

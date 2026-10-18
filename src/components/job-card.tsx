@@ -2,41 +2,33 @@
 
 import { useState, useTransition } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { Sparkles, MapPin, Building2, ExternalLink, Calendar, ChevronDown, Check, FileText, ArrowUpRight, X, Loader2, Copy, Target } from "lucide-react"
+import { Sparkles, MapPin, Building2, FileText, ArrowUpRight, Target } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
-import { NotesDrawerModal } from "@/components/notes-drawer-modal"
-import { GapAnalysisModal } from "@/components/gap-analysis-modal"
 
 interface JobCardProps {
-  job: Job
+  job: Job & { applicationNotes?: string | null }
   initialStatus?: ApplicationStatus | null
   initialNotes?: string | null
   onStatusChange?: (status: ApplicationStatus) => void
-  onNotesChange?: (notes: string) => void
+  onOpenCoverLetter?: (job: Job) => void
+  onOpenGap?: (job: Job) => void
+  onOpenNotes?: (job: Job & { applicationNotes?: string | null }) => void
 }
 
-const STATUS_CONFIG: Record<ApplicationStatus, { label: string; dot: string; text: string }> = {
-  saved: { label: "Saved", dot: "bg-zinc-400", text: "text-zinc-300" },
-  applied: { label: "Applied", dot: "bg-blue-400", text: "text-blue-300" },
-  interview: { label: "Interview", dot: "bg-purple-400", text: "text-purple-300" },
-  offered: { label: "Offered 🎉", dot: "bg-emerald-400", text: "text-emerald-300" },
-  rejected: { label: "Rejected", dot: "bg-rose-400", text: "text-rose-400" }
-}
-
-export function JobCard({ job, initialStatus, initialNotes = null, onStatusChange, onNotesChange }: JobCardProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isNotesOpen, setIsNotesOpen] = useState(false)
-  const [isGapOpen, setIsGapOpen] = useState(false)
-  const [notes, setNotes] = useState<string | null>(initialNotes)
-  const [loading, setLoading] = useState(false)
-  const [draft, setDraft] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [lang, setLang] = useState<"id" | "en">("id")
-
+export function JobCard({
+  job,
+  initialStatus,
+  initialNotes = null,
+  onStatusChange,
+  onOpenCoverLetter,
+  onOpenGap,
+  onOpenNotes
+}: JobCardProps) {
   const [currentStatus, setCurrentStatus] = useState<ApplicationStatus | null>(initialStatus || null)
   const [isPending, startTransition] = useTransition()
 
   const score = job.score ? Number(job.score).toFixed(1) : null
+  const hasNotes = Boolean(initialNotes || job.applicationNotes)
 
   async function handleStatusChange(newStatus: ApplicationStatus) {
     setCurrentStatus(newStatus)
@@ -50,316 +42,173 @@ export function JobCard({ job, initialStatus, initialNotes = null, onStatusChang
     }
   }
 
-  async function handleGenerate(selectedLang: "id" | "en") {
-    setLoading(true)
-    setLang(selectedLang)
-    try {
-      const res = await fetch("/api/cover-letter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId: job.id, lang: selectedLang })
-      })
-      const data = await res.json()
-      if (data.draft) {
-        setDraft(data.draft)
-        if (!currentStatus) setCurrentStatus("saved")
-      } else {
-        alert(data.error || "Gagal generate cover letter")
-      }
-    } catch (err: any) {
-      alert("Error: " + err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function handleCopy() {
-    if (!draft) return
-    navigator.clipboard.writeText(draft)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   return (
-    <>
-      <div className="group relative rounded-xl bg-[#0b0c0d] border border-white/[0.06] hover:border-white/[0.14] transition-all duration-150 flex flex-col justify-between p-4.5 hover:bg-[#0f1011]">
-        
-        {/* Top bar: Title, Company, Score */}
-        <div className="space-y-2.5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-0.5 pr-2">
-              <h4 className="font-medium text-[13px] text-[#f7f8f8] group-hover:text-white transition-colors leading-snug line-clamp-1">
-                {job.title}
-              </h4>
-              <div className="flex items-center gap-1.5 text-xs text-[#8a8f98]">
-                <Building2 className="w-3 h-3 text-[#62666d]" />
-                <span className="font-normal text-[11px]">{job.company}</span>
-              </div>
+    <div className="group relative rounded-xl bg-[#0b0c0d] border border-white/[0.06] hover:border-white/[0.14] transition-all duration-150 flex flex-col justify-between p-4.5 hover:bg-[#0f1011]">
+      {/* Top bar: Title, Company, Score */}
+      <div className="space-y-2.5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-0.5 pr-2">
+            <h4 className="font-medium text-[13px] text-[#f7f8f8] group-hover:text-white transition-colors leading-snug line-clamp-1">
+              {job.title}
+            </h4>
+            <div className="flex items-center gap-1.5 text-xs text-[#8a8f98]">
+              <Building2 className="w-3 h-3 text-[#8a8f98]" />
+              <span className="font-normal text-[11px]">{job.company}</span>
             </div>
-
-            {score && (
-              <div className="shrink-0 flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded text-[11px] font-mono text-[#d0d6e0]">
-                <span>{score}</span>
-              </div>
-            )}
           </div>
 
-          {/* Badges: Location, Source, & Edu Target */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            {/* Edu Target Tag */}
-            {(() => {
-              const text = `${job.title} ${job.description || ""}`.toLowerCase()
-              const isIntern = text.includes("intern") || text.includes("magang") || text.includes("pkl") || text.includes("mahasiswa")
-              const isGrad = text.includes("fresh graduate") || text.includes("sarjana") || text.includes("s1") || text.includes("d3")
-              
-              if (isIntern && !isGrad) {
-                return (
-                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                    Magang
-                  </span>
-                )
-              }
+          {score && (
+            <div className="shrink-0 flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded text-[11px] font-mono text-[#d0d6e0]">
+              <span>{score}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Badges: Location, Source, & Edu Target */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          {/* Edu Target Tag */}
+          {(() => {
+            const text = `${job.title} ${job.description || ""}`.toLowerCase()
+            const isIntern = text.includes("intern") || text.includes("magang") || text.includes("pkl") || text.includes("mahasiswa")
+            const isGrad = text.includes("fresh graduate") || text.includes("sarjana") || text.includes("s1") || text.includes("d3")
+            
+            if (isIntern && !isGrad) {
               return (
-                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                  Freshgrad
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  Magang
                 </span>
               )
-            })()}
+            }
+            return (
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                Freshgrad
+              </span>
+            )
+          })()}
 
-            <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono border ${
-              job.is_remote
+          <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded font-mono border ${
+            job.is_remote
+              ? "bg-white/[0.04] text-[#d0d6e0] border-white/[0.08]"
+              : "bg-transparent text-[#8a8f98] border-white/[0.05]"
+          }`}>
+            <MapPin className="w-2.5 h-2.5" />
+            {job.is_remote ? "Remote" : job.location || "On-site"}
+          </span>
+
+          {job.is_paid !== null && (
+            <span className={`text-[10px] px-2 py-0.5 rounded font-mono border ${
+              job.is_paid
                 ? "bg-white/[0.04] text-[#d0d6e0] border-white/[0.08]"
                 : "bg-transparent text-[#8a8f98] border-white/[0.05]"
             }`}>
-              <MapPin className="w-2.5 h-2.5" />
-              {job.is_remote ? "Remote" : job.location || "On-site"}
+              {job.is_paid ? "Paid" : "Unpaid"}
             </span>
+          )}
 
-            {job.is_paid !== null && (
-              <span className={`text-[10px] px-2 py-0.5 rounded font-mono border ${
-                job.is_paid
-                  ? "bg-white/[0.04] text-[#d0d6e0] border-white/[0.08]"
-                  : "bg-transparent text-[#62666d] border-white/[0.05]"
-              }`}>
-                {job.is_paid ? "Paid" : "Unpaid"}
-              </span>
+          <span className="text-[10px] uppercase font-mono tracking-wider text-[#8a8f98] ml-auto">
+            {job.source}
+          </span>
+        </div>
+
+        {/* Snippet Description */}
+        {job.description && (
+          <p className="text-[11px] text-[#8a8f98] leading-relaxed line-clamp-2 font-normal">
+            {job.description}
+          </p>
+        )}
+
+        {/* Matched Tech Chips */}
+        {job.score_breakdown && (
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(job.score_breakdown).map(([skill, matched]) =>
+              matched ? (
+                <span
+                  key={skill}
+                  className="bg-white/[0.02] text-[#8a8f98] border border-white/[0.05] text-[9px] px-1.5 py-0.2 rounded font-mono"
+                >
+                  {skill.replace("_", " ")}
+                </span>
+              ) : null
             )}
-
-            <span className="text-[10px] uppercase font-mono tracking-wider text-[#62666d] ml-auto">
-              {job.source}
-            </span>
           </div>
-
-          {/* Snippet Description */}
-          {job.description && (
-            <p className="text-[11px] text-[#8a8f98] leading-relaxed line-clamp-2 font-normal">
-              {job.description}
-            </p>
-          )}
-
-          {/* Matched Tech Chips */}
-          {job.score_breakdown && (
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(job.score_breakdown).map(([skill, matched]) =>
-                matched ? (
-                  <span
-                    key={skill}
-                    className="bg-white/[0.02] text-[#8a8f98] border border-white/[0.05] text-[9px] px-1.5 py-0.2 rounded font-mono"
-                  >
-                    {skill.replace("_", " ")}
-                  </span>
-                ) : null
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer: Status select & Actions */}
-        <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between gap-2">
-          {/* Status Dropdown */}
-          <div className="relative">
-            <select
-              value={currentStatus || ""}
-              onChange={(e) => {
-                const val = e.target.value as ApplicationStatus
-                if (val) handleStatusChange(val)
-              }}
-              disabled={isPending}
-              className="appearance-none bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-[11px] font-mono text-[#d0d6e0] rounded px-2 py-1 pr-5 cursor-pointer focus:outline-none focus:border-white/[0.2] transition-colors"
-            >
-              <option value="" disabled className="bg-[#0b0c0d] text-[#62666d]">Status...</option>
-              <option value="saved" className="bg-[#0b0c0d]">Saved</option>
-              <option value="applied" className="bg-[#0b0c0d]">Applied</option>
-              <option value="interview" className="bg-[#0b0c0d]">Interview</option>
-              <option value="offered" className="bg-[#0b0c0d]">Offered</option>
-              <option value="rejected" className="bg-[#0b0c0d]">Rejected</option>
-            </select>
-            <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#62666d] text-[9px]">
-              ▾
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {/* Gap Analysis Button */}
-            <button
-              onClick={() => setIsGapOpen(true)}
-              className="p-1 rounded text-[#8a8f98] hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
-              title="Analisis Kecocokan CV"
-            >
-              <Target className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Notes Button */}
-            <button
-              onClick={() => setIsNotesOpen(true)}
-              className={`p-1 rounded transition-colors relative ${
-                notes
-                  ? "text-[#d0d6e0] bg-white/[0.08]"
-                  : "text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04]"
-              }`}
-              title={notes ? "Catatan" : "Tambah Catatan"}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              {notes && (
-                <span className="absolute top-1 right-1 w-1 h-1 rounded-full bg-indigo-400" />
-              )}
-            </button>
-
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noreferrer"
-              className="p-1 rounded text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04] transition-colors"
-              title="Buka Lowongan Asli"
-            >
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </a>
-
-            <button
-              onClick={() => {
-                setIsOpen(true)
-                if (!draft) handleGenerate("id")
-              }}
-              className="inline-flex items-center gap-1 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-[#f7f8f8] text-[11px] font-mono px-2.5 py-1 rounded transition-all active:scale-95"
-            >
-              <Sparkles className="w-3 h-3 text-[#8a8f98]" />
-              <span>Cover Letter</span>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Pop-up Modal: Linear Dark Style */}
-      <GapAnalysisModal
-        jobId={job.id}
-        jobTitle={job.title}
-        company={job.company}
-        isOpen={isGapOpen}
-        onClose={() => setIsGapOpen(false)}
-      />
-
-      <NotesDrawerModal
-        jobId={job.id}
-        jobTitle={job.title}
-        company={job.company}
-        initialNotes={notes}
-        isOpen={isNotesOpen}
-        onClose={() => setIsNotesOpen(false)}
-        onSaveNotes={(saved) => {
-          setNotes(saved)
-          if (onNotesChange) onNotesChange(saved)
-        }}
-      />
-
-      {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0f1011] rounded-2xl border border-white/[0.1] shadow-2xl max-w-2xl w-full max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in-0 zoom-in-95">
-            {/* Modal Header */}
-            <div className="p-4 px-5 border-b border-white/[0.06] flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-sm text-[#f7f8f8]">Cover Letter Drafter</h3>
-                <p className="text-xs text-[#8a8f98] mt-0.5">{job.title} : {job.company}</p>
-              </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-md text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.05] transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Language Switcher */}
-            <div className="px-5 py-2.5 bg-[#08090a] border-b border-white/[0.05] flex items-center justify-between text-xs">
-              <span className="text-[#8a8f98] text-[11px]">Bahasa Draft:</span>
-              <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
-                <button
-                  disabled={loading}
-                  onClick={() => handleGenerate("id")}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                    lang === "id"
-                      ? "bg-[#5e6ad2] text-white shadow-sm"
-                      : "text-[#8a8f98] hover:text-[#d0d6e0]"
-                  }`}
-                >
-                  Bahasa Indonesia
-                </button>
-                <button
-                  disabled={loading}
-                  onClick={() => handleGenerate("en")}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                    lang === "en"
-                      ? "bg-[#5e6ad2] text-white shadow-sm"
-                      : "text-[#8a8f98] hover:text-[#d0d6e0]"
-                  }`}
-                >
-                  English
-                </button>
-              </div>
-            </div>
-
-            {/* Text Preview Area */}
-            <div className="p-5 flex-1 overflow-y-auto">
-              {loading ? (
-                <div className="py-20 text-center space-y-3">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#7170ff]" />
-                  <p className="text-xs text-[#8a8f98]">Menyusun draf autentik berbasis profil kamu...</p>
-                </div>
-              ) : draft ? (
-                <div className="bg-[#08090a] p-5 rounded-xl border border-white/[0.06] text-xs font-mono leading-relaxed whitespace-pre-wrap text-[#d0d6e0] selection:bg-[#5e6ad2]/30">
-                  {draft}
-                </div>
-              ) : (
-                <div className="py-16 text-center text-xs text-[#8a8f98]">
-                  Pilih bahasa di atas untuk memuat draf surat.
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 px-5 border-t border-white/[0.06] bg-[#0c0d0e] flex items-center justify-between">
-              <span className="text-[11px] text-[#62666d] font-mono">
-                Auto-saved to applications
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={!draft || loading}
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-[#d0d6e0] font-medium px-3.5 py-1.5 rounded-md transition-colors"
-                >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied ? "Tersalin!" : "Salin Surat"}</span>
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="bg-[#5e6ad2] hover:bg-[#7170ff] text-white text-xs font-medium px-4 py-1.5 rounded-md transition-colors"
-                >
-                  Selesai
-                </button>
-              </div>
-            </div>
+      {/* Footer: Status select & Actions */}
+      <div className="mt-4 pt-3 border-t border-white/[0.05] flex items-center justify-between gap-2">
+        {/* Status Dropdown */}
+        <div className="relative">
+          <select
+            value={currentStatus || ""}
+            onChange={(e) => {
+              const val = e.target.value as ApplicationStatus
+              if (val) handleStatusChange(val)
+            }}
+            disabled={isPending}
+            className="h-9 sm:h-8 appearance-none bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-[11px] font-mono text-[#d0d6e0] rounded-lg px-2.5 pr-6 cursor-pointer focus:outline-none focus:border-white/[0.2] transition-colors touch-manipulation"
+          >
+            <option value="" disabled className="bg-[#0b0c0d] text-[#8a8f98]">Status...</option>
+            <option value="saved" className="bg-[#0b0c0d]">Disimpan</option>
+            <option value="applied" className="bg-[#0b0c0d]">Sudah Dilamar</option>
+            <option value="interview" className="bg-[#0b0c0d]">Interview</option>
+            <option value="offered" className="bg-[#0b0c0d]">Penawaran</option>
+            <option value="rejected" className="bg-[#0b0c0d]">Ditolak</option>
+          </select>
+          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8a8f98] text-[9px]">
+            ▾
           </div>
         </div>
-      )}
-    </>
+
+        <div className="flex items-center gap-1.5">
+          {/* Gap Analysis Button */}
+          <button
+            type="button"
+            onClick={() => onOpenGap?.(job)}
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors touch-manipulation active:scale-95"
+            title="Analisis Kecocokan CV"
+          >
+            <Target className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+          </button>
+
+          {/* Notes Button */}
+          <button
+            type="button"
+            onClick={() => onOpenNotes?.(job)}
+            className={`h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg transition-colors relative touch-manipulation active:scale-95 ${
+              hasNotes
+                ? "text-[#d0d6e0] bg-white/[0.08]"
+                : "text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04]"
+            }`}
+            title={hasNotes ? "Catatan" : "Tambah Catatan"}
+          >
+            <FileText className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+            {hasNotes && (
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400" />
+            )}
+          </button>
+
+          {/* External Link */}
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noreferrer"
+            className="h-9 w-9 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg text-[#8a8f98] hover:text-[#f7f8f8] hover:bg-white/[0.04] transition-colors touch-manipulation active:scale-95"
+            title="Buka Lowongan Asli"
+          >
+            <ArrowUpRight className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+          </a>
+
+          {/* Cover Letter Drafter Button */}
+          <button
+            type="button"
+            onClick={() => onOpenCoverLetter?.(job)}
+            className="h-9 sm:h-8 inline-flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-[#f7f8f8] text-[11px] font-mono px-3 rounded-lg transition-all active:scale-95 touch-manipulation"
+          >
+            <Sparkles className="w-3 h-3 text-[#8a8f98]" />
+            <span>Cover Letter</span>
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

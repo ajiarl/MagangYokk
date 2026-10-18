@@ -1,7 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
-import { Sparkles, Terminal } from "lucide-react"
 
 export const revalidate = 0
 
@@ -62,7 +61,7 @@ export default async function Home() {
         <div className="w-full px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="font-semibold text-[13px] tracking-tight text-[#f7f8f8]">MagangYokk</span>
-            <span className="text-[11px] font-mono text-[#62666d]">/</span>
+            <span className="text-[11px] font-mono text-[#8a8f98]">/</span>
             <span className="text-xs text-[#8a8f98] font-mono">{jobsWithApps.length} opportunities</span>
           </div>
 
