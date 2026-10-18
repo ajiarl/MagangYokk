@@ -1,26 +1,109 @@
 "use server"
 
+import { headers } from "next/headers"
+import { revalidatePath } from "next/cache"
 import { supabase } from "@/lib/supabase"
 import { ApplicationStatus } from "@/lib/types"
-import { revalidatePath } from "next/cache"
 
-export async function updateJobStatus(jobId: string, status: ApplicationStatus) {
+const ALLOWED_STATUSES: readonly ApplicationStatus[] = [
+  "saved",
+  "applied",
+  "interview",
+  "offered",
+  "rejected",
+] as const
+
+async function isRequestAuthorized(): Promise<boolean> {
   try {
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id")
-      .limit(1)
-      .single()
+    const headerList = await headers()
+    const internalSecret = process.env.INTERNAL_ACTION_SECRET
+    if (internalSecret) {
+      const providedSecret = headerList.get("x-action-secret")
+      if (providedSecret === internalSecret) return true
+    }
+    const host = headerList.get("x-forwarded-host") || headerList.get("host")
+    const origin = headerList.get("origin")
+    const referer = headerList.get("referer")
 
-    if (profileError || !profile) {
+    if (!host) {
+      return false
+    }
+
+    if (!origin && !referer) {
+      return false
+    }
+
+    if (origin) {
+      try {
+        const originHost = new URL(origin).host
+        if (originHost !== host) {
+          return false
+        }
+      } catch {
+        return false
+      }
+    }
+
+    if (referer) {
+      try {
+        const refererHost = new URL(referer).host
+        if (refererHost !== host) {
+          return false
+        }
+      } catch {
+        return false
+      }
+    }
+
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function resolveAuthenticatedProfile(): Promise<{ id: string } | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) {
+    console.error("Gagal resolve authenticated profile:", error)
+    return null
+  }
+  return data
+}
+
+export async function updateJobStatus(
+  jobId: string,
+  status: ApplicationStatus
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!(await isRequestAuthorized())) {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    const trimmedJobId = typeof jobId === "string" ? jobId.trim() : ""
+    if (!trimmedJobId || trimmedJobId.length > 128) {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    const profile = await resolveAuthenticatedProfile()
+    if (!profile) {
       return { success: false, error: "Profil tidak ditemukan." }
     }
 
     const payload: Record<string, string | ApplicationStatus> = {
-      job_id: jobId,
+      job_id: trimmedJobId,
       profile_id: profile.id,
       status: status,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     }
 
     if (status === "applied") {
@@ -45,23 +128,36 @@ export async function updateJobStatus(jobId: string, status: ApplicationStatus) 
   }
 }
 
-export async function updateApplicationNotes(jobId: string, notes: string) {
+export async function updateApplicationNotes(
+  jobId: string,
+  notes: string
+): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id")
-      .limit(1)
-      .single()
+    if (!(await isRequestAuthorized())) {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
 
-    if (profileError || !profile) {
+    const trimmedJobId = typeof jobId === "string" ? jobId.trim() : ""
+    if (!trimmedJobId || trimmedJobId.length > 128) {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    if (typeof notes !== "string") {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    const validatedNotes = notes.trim().slice(0, 2000)
+
+    const profile = await resolveAuthenticatedProfile()
+    if (!profile) {
       return { success: false, error: "Profil tidak ditemukan." }
     }
 
     const payload: Record<string, string> = {
-      job_id: jobId,
+      job_id: trimmedJobId,
       profile_id: profile.id,
-      notes: notes,
-      updated_at: new Date().toISOString()
+      notes: validatedNotes,
+      updated_at: new Date().toISOString(),
     }
 
     const { error } = await supabase

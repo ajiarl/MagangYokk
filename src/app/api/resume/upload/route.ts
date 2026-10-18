@@ -1,10 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 // @ts-expect-error pdf-parse-fork lacks bundled type definitions
 import pdfParse from "pdf-parse-fork"
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+    const rateLimit = checkRateLimit(`resume-upload:${clientIp}`, {
+      limit: 3,
+      windowMs: 600 * 1000,
+    })
+
+    if (!rateLimit.success) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((rateLimit.resetTime - Date.now()) / 1000))
+      return NextResponse.json(
+        { error: "Batas unggah resume tercapai (maks 3 kali per 10 menit). Silakan coba lagi nanti." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfterSeconds.toString(),
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": Math.ceil(rateLimit.resetTime / 1000).toString(),
+          },
+        }
+      )
+    }
     const formData = await req.formData()
     const file = formData.get("file") as File | null
 
@@ -55,9 +77,9 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
+      .order("created_at", { ascending: true })
       .limit(1)
-      .single()
-
+      .maybeSingle()
     if (profile) {
       // Simpan bio / resume_raw_text ke Supabase
       await supabase

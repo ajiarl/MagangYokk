@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
-
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 interface GapAnalysisResponse {
   matchScore: number
   matchedSkills: string[]
@@ -24,6 +24,28 @@ function extractJson(text: string): Record<string, unknown> {
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+    const rateLimit = checkRateLimit(`analyze-gap:${clientIp}`, {
+      limit: 5,
+      windowMs: 60 * 1000,
+    })
+
+    if (!rateLimit.success) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((rateLimit.resetTime - Date.now()) / 1000))
+      return NextResponse.json(
+        { error: "Terlalu banyak permintaan analisis profil. Silakan tunggu 1 menit sebelum mencoba kembali." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfterSeconds.toString(),
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": Math.ceil(rateLimit.resetTime / 1000).toString(),
+          },
+        }
+      )
+    }
+
     const { jobId } = await req.json()
 
     if (!jobId || typeof jobId !== "string" || !jobId.trim()) {
@@ -45,9 +67,9 @@ export async function POST(req: NextRequest) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, full_name, skills, bio")
+      .order("created_at", { ascending: true })
       .limit(1)
-      .single()
-
+      .maybeSingle()
     if (profileError || !profile) {
       return NextResponse.json({ error: "Profil tidak ditemukan." }, { status: 404 })
     }

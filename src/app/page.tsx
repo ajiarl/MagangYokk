@@ -1,7 +1,7 @@
+import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
-
 export const revalidate = 0
 
 async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]> {
@@ -42,8 +42,9 @@ async function getProfile() {
   const { data } = await supabase
     .from("profiles")
     .select("full_name, skills, score_threshold")
+    .order("created_at", { ascending: true })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   return data
 }
@@ -81,6 +82,31 @@ export default async function Home() {
         {/* Client Search, Filters, Tabs & Grid */}
         <JobFeedClient initialJobs={jobsWithApps} />
       </main>
+
+      {/* Footer */}
+      <footer className="w-full border-t border-white/[0.06] bg-[#08090a] mt-8 py-8 px-6 text-xs text-[#8a8f98]">
+        <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-white">MagangYokk</span>
+            <span className="text-[#62666d]">•</span>
+            <span className="font-mono text-[11px]">v0.2.0</span>
+            <span className="text-[#62666d]">•</span>
+            <span className="text-[11px] text-emerald-400/90 font-mono flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+              Data dilindungi UU PDP No. 27/2022
+            </span>
+          </div>
+
+          <div className="flex items-center gap-6 font-mono text-[11px]">
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Kebijakan Privasi
+            </Link>
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Syarat & Ketentuan
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

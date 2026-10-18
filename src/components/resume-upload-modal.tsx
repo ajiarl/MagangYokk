@@ -11,6 +11,7 @@ export function ResumeUploadModal({
   onClose: () => void
 }) {
   const [file, setFile] = useState<File | null>(null)
+  const [consentGiven, setConsentGiven] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -19,7 +20,7 @@ export function ResumeUploadModal({
   if (!isOpen) return null
 
   async function handleUpload() {
-    if (!file) return
+    if (!file || !consentGiven) return
     setUploading(true)
     setErrorMsg(null)
     setSuccessMsg(null)
@@ -114,6 +115,20 @@ export function ResumeUploadModal({
             )}
           </div>
 
+          <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#8a8f98] select-none p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors">
+            <input
+              type="checkbox"
+              checked={consentGiven}
+              onChange={(e) => setConsentGiven(e.target.checked)}
+              className="mt-0.5 rounded border-white/20 bg-white/5 text-[#5e6ad2] focus:ring-[#5e6ad2] focus:ring-offset-0"
+            />
+            <span>
+              Saya menyetujui pemrosesan data CV saya untuk analisis kesenjangan skill dan pembuatan surat lamaran via Groq Cloud (AS) sesuai{" "}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#5e6ad2] underline hover:text-[#7170ff]">
+                Kebijakan Privasi (UU PDP)
+              </a>.
+            </span>
+          </label>
           {errorMsg && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -140,7 +155,7 @@ export function ResumeUploadModal({
           </button>
           <button
             type="button"
-            disabled={!file || uploading}
+            disabled={!file || !consentGiven || uploading}
             onClick={handleUpload}
             className="h-9 px-4 inline-flex items-center gap-1.5 rounded-lg text-xs font-mono font-medium bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white transition-all shadow-sm active:scale-95 touch-manipulation disabled:opacity-40"
           >

@@ -140,8 +140,6 @@ create policy "jobs_read_all"
   on public.jobs for select
   to anon, authenticated
   using (true);
--- jobs: public read (semua bisa lihat), write hanya via service_role (scraper)
-alter table public.jobs enable row level security;
 
 -- Grant standard privileges to Data API roles
 grant usage on schema public to anon, authenticated, service_role;
@@ -151,7 +149,7 @@ grant all on all routines in schema public to service_role;
 
 grant select on public.jobs to anon, authenticated;
 
-create policy "jobs_read_all"
+alter table public.profiles enable row level security;
 create policy "profiles_read_own"
   on public.profiles for select
   to authenticated
@@ -161,7 +159,6 @@ create policy "profiles_update_own"
   to authenticated
   using ( (select auth.uid()) = user_id )
   with check ( (select auth.uid()) = user_id );
-
 alter table public.applications enable row level security;
 create policy "applications_read_own"
   on public.applications for select

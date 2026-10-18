@@ -1,10 +1,33 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+    const rateLimit = checkRateLimit(`cover-letter:${clientIp}`, {
+      limit: 5,
+      windowMs: 60 * 1000,
+    })
+
+    if (!rateLimit.success) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((rateLimit.resetTime - Date.now()) / 1000))
+      return NextResponse.json(
+        { error: "Terlalu banyak permintaan pembuatan surat lamaran. Silakan tunggu 1 menit sebelum mencoba kembali." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfterSeconds.toString(),
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": Math.ceil(rateLimit.resetTime / 1000).toString(),
+          },
+        }
+      )
+    }
+
     if (!GROQ_API_KEY) {
       return NextResponse.json(
         { error: "GROQ_API_KEY belum dikonfigurasi di environment." },
@@ -48,8 +71,9 @@ export async function POST(req: NextRequest) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
+      .order("created_at", { ascending: true })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (profileError || !profile) {
       return NextResponse.json(
