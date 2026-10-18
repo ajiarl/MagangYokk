@@ -4,34 +4,26 @@ import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
 export const revalidate = 0
 
+type RawJobRecord = Job & {
+  applications?: Array<{ status: ApplicationStatus; notes: string | null }> | null
+}
+
 async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]> {
   const { data: jobs, error: jobsError } = await supabase
     .from("jobs")
-    .select("*")
+    .select("*, applications(status, notes)")
     .order("score", { ascending: false, nullsFirst: false })
     .order("scraped_at", { ascending: false })
     .limit(100)
 
   if (jobsError || !jobs) return []
 
-  const { data: applications } = await supabase
-    .from("applications")
-    .select("job_id, status, notes")
-
-  const appMap = new Map<string, { status: ApplicationStatus; notes: string | null }>()
-  if (applications) {
-    applications.forEach((app) => {
-      appMap.set(app.job_id, {
-        status: app.status as ApplicationStatus,
-        notes: app.notes || null
-      })
-    })
-  }
-
-  return jobs.map((job) => {
-    const userApp = appMap.get(job.id)
+  const rawJobs = jobs as RawJobRecord[]
+  return rawJobs.map((job) => {
+    const { applications, ...jobData } = job
+    const userApp = Array.isArray(applications) ? applications[0] : null
     return {
-      ...job,
+      ...jobData,
       applicationStatus: userApp?.status || null,
       applicationNotes: userApp?.notes || null
     }

@@ -43,9 +43,9 @@ create table if not exists public.jobs (
 
 create index if not exists jobs_score_idx       on public.jobs (score desc);
 create index if not exists jobs_scraped_at_idx  on public.jobs (scraped_at desc);
+create index if not exists jobs_score_scraped_idx on public.jobs (score desc nulls last, scraped_at desc);
 create index if not exists jobs_is_remote_idx   on public.jobs (is_remote);
 create index if not exists jobs_source_idx      on public.jobs (source);
-
 -- ────────────────────────────────────────────────────────────
 -- 2. SEEN_JOBS
 --    Dedup tracker — mencegah scraper push lowongan duplikat.
