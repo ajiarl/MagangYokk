@@ -41,11 +41,66 @@ async function getProfile() {
   return data
 }
 
+function toSafeIsoDate(dateStr: string | null | undefined, fallbackDate: Date = new Date()): string {
+  if (!dateStr) return fallbackDate.toISOString()
+  const d = new Date(dateStr)
+  return isNaN(d.getTime()) ? fallbackDate.toISOString() : d.toISOString()
+}
+
 export default async function Home() {
   const [jobsWithApps, profile] = await Promise.all([
     getJobsWithApplications(),
     getProfile()
   ])
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: jobsWithApps.map((job, index) => {
+      const datePosted = toSafeIsoDate(job.scraped_at || job.created_at)
+      const validThrough = job.expires_at
+        ? toSafeIsoDate(job.expires_at)
+        : new Date(new Date(datePosted).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "JobPosting",
+          title: job.title,
+          description:
+            job.description ||
+            `Lowongan magang ${job.title} di ${job.company}. Temukan info lengkap dan lamar melalui MagangYokk.`,
+          datePosted,
+          validThrough,
+          employmentType: "INTERN",
+          hiringOrganization: {
+            "@type": "Organization",
+            name: job.company,
+          },
+          jobLocation: {
+            "@type": "Place",
+            address: {
+              "@type": "PostalAddress",
+              addressCountry: "ID",
+              addressLocality: job.location || "Indonesia",
+            },
+          },
+          ...(job.is_remote
+            ? {
+                jobLocationType: "TELECOMMUTE",
+                applicantLocationRequirements: {
+                  "@type": "Country",
+                  name: "ID",
+                },
+              }
+            : {}),
+          directApply: true,
+          url: job.url,
+        },
+      }
+    }),
+  }
 
   return (
     <div className="min-h-screen bg-[#08090a] text-[#f7f8f8] antialiased selection:bg-[#5e6ad2]/30 selection:text-white">
@@ -71,6 +126,10 @@ export default async function Home() {
 
       {/* Main Container - Edge-to-Edge Workspace */}
       <main className="w-full px-6 py-5">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+        />
         {/* Client Search, Filters, Tabs & Grid */}
         <JobFeedClient initialJobs={jobsWithApps} />
       </main>

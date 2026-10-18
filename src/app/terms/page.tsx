@@ -3,8 +3,11 @@ import Link from "next/link"
 import { ArrowLeft, BookOpen, AlertTriangle, Sparkles, ShieldAlert, Scale } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Syarat & Ketentuan Layanan | MagangYokk",
+  title: "Syarat & Ketentuan Layanan",
   description: "Syarat dan Ketentuan Penggunaan Platform MagangYokk bagi mahasiswa dan pencari magang.",
+  alternates: {
+    canonical: "/terms",
+  },
 }
 
 export default function TermsPage() {

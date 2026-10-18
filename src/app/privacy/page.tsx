@@ -3,8 +3,11 @@ import Link from "next/link"
 import { ArrowLeft, ShieldCheck, Lock, Cpu, Database, Eye, FileText, UserCheck, HelpCircle } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Kebijakan Privasi | MagangYokk",
+  title: "Kebijakan Privasi",
   description: "Kebijakan Privasi MagangYokk sesuai Undang-Undang Perlindungan Data Pribadi (UU PDP No. 27 Tahun 2022).",
+  alternates: {
+    canonical: "/privacy",
+  },
 }
 
 export default function PrivacyPage() {
