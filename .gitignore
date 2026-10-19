@@ -47,3 +47,10 @@ generated/
 
 /src/generated/prisma
 .env
+
+# editor & agent caches
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
+internhunt-architecture.html
