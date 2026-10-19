@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { X, FileText, Check, Loader2 } from "lucide-react"
 import { updateApplicationNotes } from "@/app/actions"
+import { toast } from "sonner"
 
 interface NotesDrawerModalProps {
   jobId: string
@@ -102,13 +103,14 @@ export function NotesDrawerModal({
       }
       setIsDraftRecovered(false)
       setSavedSuccess(true)
+      toast.success("Catatan lamaran berhasil disimpan")
       onSaveNotes(notes)
       setTimeout(() => {
         setSavedSuccess(false)
         onClose()
       }, 700)
     } else {
-      alert("Gagal menyimpan catatan: " + res.error)
+      toast.error("Gagal menyimpan catatan: " + (res.error || "Terjadi kesalahan"))
     }
   }
   return (

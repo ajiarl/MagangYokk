@@ -18,6 +18,7 @@ import {
   Kanban
 } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
+import { toast } from "sonner"
 
 interface JobFeedClientProps {
   initialJobs: (Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]
@@ -54,7 +55,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
     startTransition(async () => {
       const res = await updateJobStatus(jobId, newStatus)
       if (!res.success) {
-        alert("Gagal update status: " + res.error)
+        toast.error("Gagal update status: " + res.error)
         setJobs((prev) =>
           prev.map((j) =>
             j.id === jobId ? { ...j, applicationStatus: previousStatus } : j

@@ -5,6 +5,7 @@ import { Job, ApplicationStatus } from "@/lib/types"
 import { getJobEduCategory } from "@/lib/job-utils"
 import { Sparkles, MapPin, Building2, FileText, ArrowUpRight, Target } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
+import { toast } from "sonner"
 
 interface JobCardProps {
   job: Job & { applicationNotes?: string | null }
@@ -38,7 +39,7 @@ export function JobCard({
     } else {
       startTransition(async () => {
         const res = await updateJobStatus(job.id, newStatus)
-        if (!res.success) alert("Gagal update status: " + res.error)
+        if (!res.success) toast.error("Gagal update status: " + res.error)
       })
     }
   }

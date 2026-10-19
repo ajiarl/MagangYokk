@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { X, Loader2, Copy, Check, RotateCcw } from "lucide-react"
+import { toast } from "sonner"
 
 export interface CoverLetterModalProps {
   job: (Job & { applicationStatus?: ApplicationStatus | null }) | null
@@ -41,11 +42,11 @@ export function CoverLetterModal({
             onStatusChange(targetJob.id, "saved")
           }
         } else {
-          alert(data.error || "Gagal generate cover letter")
+          toast.error(data.error || "Gagal generate cover letter")
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
-        alert("Error: " + message)
+        toast.error("Error: " + message)
       } finally {
         setLoading(false)
       }
@@ -73,13 +74,13 @@ export function CoverLetterModal({
             onStatusChange(job.id, "saved")
           }
         } else {
-          alert(data.error || "Gagal generate cover letter")
+          toast.error(data.error || "Gagal generate cover letter")
         }
       })
       .catch((err: unknown) => {
         if (ignore) return
         const message = err instanceof Error ? err.message : String(err)
-        alert("Error: " + message)
+        toast.error("Error: " + message)
       })
       .finally(() => {
         if (!ignore) {
@@ -96,6 +97,7 @@ export function CoverLetterModal({
     if (!draft) return
     navigator.clipboard.writeText(draft)
     setCopied(true)
+    toast.success("Cover letter berhasil disalin ke clipboard")
     setTimeout(() => setCopied(false), 2000)
   }
 
