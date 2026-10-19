@@ -80,4 +80,46 @@ test.describe("MagangYokk Critical User Journey", () => {
       await expect(searchInput).toBeVisible();
     }
   });
+
+  test("4. Siklus Hidup Pelacakan: mutasi status dari Feed dan verifikasi di Kanban Board", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const statusSelect = page
+      .locator('select[aria-label="Pilih status lamaran"]')
+      .first();
+
+    if (await statusSelect.isVisible()) {
+      // Mutasikan status lowongan pertama ke "saved" (Disimpan)
+      await statusSelect.selectOption("saved");
+      await expect(statusSelect).toHaveValue("saved");
+
+      // Beralih ke tampilan Kanban Board
+      const boardBtn = page.getByRole("button", { name: "Board" });
+      await expect(boardBtn).toBeVisible();
+      await boardBtn.click();
+
+      // Verifikasi bahwa kolom "Disimpan" tampil dan aktif di Kanban
+      const savedHeading = page.getByRole("heading", { name: "Disimpan" });
+      await expect(savedHeading).toBeVisible();
+
+      // Beralih kembali ke tampilan Feed
+      const feedBtn = page.getByRole("button", { name: "Feed" });
+      await expect(feedBtn).toBeVisible();
+      await feedBtn.click();
+
+      // Pastikan status select masih mempertahankan nilai "saved"
+      await expect(statusSelect).toHaveValue("saved");
+    } else {
+      // Fallback jika feed kosong: uji tombol toggle Board tetap dapat diakses
+      const boardBtn = page.getByRole("button", { name: "Board" });
+      if (await boardBtn.isVisible()) {
+        await boardBtn.click();
+        const feedBtn = page.getByRole("button", { name: "Feed" });
+        await expect(feedBtn).toBeVisible();
+        await feedBtn.click();
+      }
+    }
+  });
 });

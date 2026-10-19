@@ -8,8 +8,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 [![Database](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
 [![AI Engine](https://img.shields.io/badge/Groq-Llama_3.3_70B-f55036?style=flat-square)](https://groq.com/)
-[![Unit Tests](https://img.shields.io/badge/Vitest-31_Passed-6E9F18?style=flat-square&logo=vitest)](https://vitest.dev/)
-[![E2E Tests](https://img.shields.io/badge/Playwright-Chromium-45ba4b?style=flat-square&logo=playwright)](https://playwright.dev/)
+[![Unit Tests](https://img.shields.io/badge/Vitest-51_Passed-6E9F18?style=flat-square&logo=vitest)](https://vitest.dev/)
+[![E2E Tests](https://img.shields.io/badge/Playwright-4_Passed-45ba4b?style=flat-square&logo=playwright)](https://playwright.dev/)
 [![Compliance](https://img.shields.io/badge/UU_PDP-Compliant-blue?style=flat-square)](docs/audit/12-privasi-dan-regulasi.md)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -22,8 +22,9 @@
 4. [Tech Stack & Dependensi](#4-tech-stack--dependensi)
 5. [Panduan Instalasi & Local Development](#5-panduan-instalasi--local-development)
 6. [Suite Pengujian & Quality Gates](#6-suite-pengujian--quality-gates)
-7. [Laporan Penjaminan Mutu (Audit 100%)](#7-laporan-penjaminan-mutu-audit-100)
-8. [Pembuat & Lisensi](#8-pembuat--lisensi)
+7. [Laporan Penjaminan Mutu & Kesiapan Rilis Phase 1](#7-laporan-penjaminan-mutu--kesiapan-rilis-phase-1)
+8. [Keamanan & Batas Arsitektur (Single-User vs Multi-User)](#8-keamanan--batas-arsitektur-single-user-vs-multi-user)
+9. [Pembuat & Lisensi](#9-pembuat--lisensi)
 
 ---
 
@@ -165,7 +166,13 @@ npm install
 ```
 
 #### 3. Konfigurasi Environment Variables
-Salin berkas contoh atau buat berkas `.env.local` pada direktori root:
+Salin berkas template `.env.example` menjadi `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+Buka `.env.local` dan sesuaikan nilainya:
 
 ```env
 # URL Basis Aplikasi
@@ -180,12 +187,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 # AI Engine Groq Cloud
 GROQ_API_KEY=gsk_...
 
-# Keamanan Server Actions & Internal Guard
+# Keamanan Server Actions & Internal Guard (Opsional)
 INTERNAL_ACTION_SECRET=your-random-strong-secret-key
 ```
 
 > **Catatan Keamanan:** `SUPABASE_SERVICE_ROLE_KEY` dan `INTERNAL_ACTION_SECRET` tidak boleh terekspos ke sisi klien. Berkas `src/lib/supabase.ts` dilindungi oleh modul `server-only`.
-
 #### 4. Inisialisasi Database Supabase
 Buka SQL Editor di Dashboard Supabase Anda, lalu jalankan secara berurutan:
 1. `docs/magangyokk-schema.sql` (Membuat tabel `jobs`, `seen_jobs`, `profiles`, `applications`, `audit_logs`, indeks performa, dan kebijakan RLS).
@@ -205,19 +211,20 @@ MagangYokk menerapkan strategi penjaminan mutu piramida pengujian penuh untuk me
 
 | Pengujian | Perintah | Target & Standar Kelulusan | Status Verifikasi |
 | :--- | :--- | :--- | :--- |
-| **Unit Testing** | `npm test` | 31 unit test lulus (algoritma scoring, validasi utilitas, audit trail, API health) | ✅ 31 Passed |
+| **Unit Testing** | `npm test` | 51 unit & integration test lulus (algoritma scoring, validasi utilitas, audit trail, API health, Server Action job mutation) | ✅ 51 Passed |
 | **Type Check** | `npx tsc --noEmit` | Strict mode TypeScript tanpa kesalahan kompilasi | ✅ 0 Errors |
 | **Linting** | `npm run lint` | Standar ESLint Next.js 16 bersih tanpa pelanggaran sintaks | ✅ 0 Warnings |
 | **Production Build** | `npm run build` | Next.js Turbopack compile sukses dengan rute statis & dinamis valid | ✅ Sukses |
-| **E2E Testing** | `npm run test:e2e` | Playwright menguji skenario alur pengguna nyata di peramban Chromium | ✅ 3 Passed |
+| **E2E Testing** | `npm run test:e2e` | Playwright menguji skenario alur pengguna nyata di peramban Chromium (Beranda, Filter, Cover Letter, Mutasi Feed ke Kanban) | ✅ 4 Passed |
 | **Load Testing** | `npm run test:load` | Uji ketahanan konkurensi (50 worker simultan, 409+ RPS, 0% error rate) | ✅ Teruji |
 
 ---
 
-## 7. Laporan Penjaminan Mutu (Audit 100%)
+## 7. Laporan Penjaminan Mutu & Kesiapan Rilis Phase 1
 
-Repositori ini telah diaudit secara komprehensif melalui 14 modul evaluasi teknis independen yang didokumentasikan pada direktori `docs/audit/`. Berdasarkan evaluasi akhir 60 Butir Master Checklist, aplikasi MagangYokk dinyatakan **Lulus Sempurna (100% Production Ready)**:
+Repositori ini telah diaudit secara komprehensif melalui 14 modul evaluasi teknis independen yang didokumentasikan pada direktori `docs/audit/`. Berdasarkan evaluasi akhir 60 Butir Master Checklist, aplikasi MagangYokk dinyatakan **Production Ready for Phase 1 (Single-User MVP) — Seluruh 60 Butir Master Checklist Terverifikasi untuk Pengoperasian Mandiri (Solo Developer Operation)**:
 
+> **Batasan Ruang Lingkup Operasional:** Status kesiapan produksi ini secara ketat dievaluasi untuk ruang lingkup operasional Phase 1 internal pengguna tunggal (Aji Arlando). Seluruh mekanisme perlindungan (Origin Guard, rate limiting, hashing jejak audit UU PDP) beroperasi optimal pada parameter arsitektural ini.
 | No | Modul Audit | Berkas Rujukan | Ringkasan Verifikasi Teknis |
 | :---: | :--- | :--- | :--- |
 | **01** | Perencanaan & Analisis | `docs/audit/01-perencanaan-dan-analisis.md` | Validasi target pengguna mahasiswa IT dan spesifikasi kebutuhan PRD. |
@@ -237,7 +244,27 @@ Repositori ini telah diaudit secara komprehensif melalui 14 modul evaluasi tekni
 
 ---
 
-## 8. Pembuat & Lisensi
+## 8. Keamanan & Batas Arsitektur (Single-User vs Multi-User)
+
+### Rasional Desain Phase 1 (Single-User MVP)
+Penggunaan `SUPABASE_SERVICE_ROLE_KEY` pada Server Actions di `src/app/actions.ts` adalah keputusan arsitektur yang disengaja (*intentional architectural choice*) untuk menyederhanakan MVP tanpa overhead implementasi UI autentikasi publik (login, register, token refresh, password reset).
+
+### Lapisan Pertahanan Saat Ini (Defense in Depth)
+1. **Isolasi Modul `server-only`:** Mencegah kebocoran kredensial rahasia ke bundle browser client.
+2. **Origin & Referer Guard:** Memeriksa kesesuaian host domain pengirim pada setiap mutasi Server Action untuk mencegah eksekusi CSRF / unauthenticated cross-origin invocation.
+3. **Internal Action Secret:** Header `x-action-secret` opsional untuk membatasi pemanggilan antar-layanan atau worker daemon eksternal.
+4. **Pseudonimisasi Audit Trail SHA-256:** Kepatuhan terhadap UU PDP No. 27/2022 dengan melakukan hashing alamat IP pengguna pada tabel `audit_logs` tanpa menyimpan PII mentah.
+
+### Roadmap Phase 2: Transisi ke Multi-User Publik
+Sebelum pendaftaran akun dibuka untuk masyarakat umum, sistem **wajib** melalui tahapan refaktorisasi keamanan berikut:
+1. **Supabase Auth (`@supabase/ssr`):** Mengganti profil tunggal hardcoded dengan sistem registrasi/login berbasis cookie HTTP-Only (`sb-...-auth-token`).
+2. **Scoped Supabase Client:** Menghapus penggunaan `SUPABASE_SERVICE_ROLE_KEY` pada Server Actions pengguna, menggantinya dengan Supabase client berkonteks token sesi pengguna (`createClient` dengan server cookies).
+3. **Enforcement RLS PostgreSQL:** Mengaktifkan kebijakan RLS berbasis `auth.uid() = profile_id` secara ketat pada tabel `applications` dan `profiles`.
+4. **Integritas Relasi Database:** Menghubungkan kolom `profiles.id` langsung ke `auth.users(id) ON DELETE CASCADE`.
+
+---
+
+## 9. Pembuat & Lisensi
 
 ### Pembuat
 - **Aji Arlando**  

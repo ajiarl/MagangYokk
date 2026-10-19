@@ -33,14 +33,22 @@ docs/
 npm install
 ```
 
-Buat `.env.local` di root dengan variabel berikut (lihat `.env.local` yang sudah ada):
+Salin template `.env.example` ke `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+Isi variabel di dalam `.env.local` dengan kredensial proyek Supabase & Groq Anda:
 
 ```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...          # server-only, JANGAN expose ke client
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 GROQ_API_KEY=...
+INTERNAL_ACTION_SECRET=...             # opsional, untuk guard header x-action-secret
 ```
 
 ## Development
@@ -51,14 +59,24 @@ npm run build   # production build
 npm run lint    # ESLint
 ```
 
-## Arsitektur Akses Data Supabase
+## Arsitektur Akses Data & Batas Keamanan (Phase 1 Single-User MVP)
+
+**STATUS ARSITEKTUR:** Platform saat ini berstatus **Phase 1 Single-User MVP** untuk pengoperasian mandiri solo-developer (Aji Arlando).
 
 **PENTING:** Semua Supabase query menggunakan `@supabase/supabase-js` dan wajib dijalankan di **server-side** (Server Components, Server Actions, Route Handlers).
 
 - Gunakan `import { supabase } from '@/lib/supabase'`
 - `src/lib/supabase.ts` dilindungi oleh `import 'server-only'` — **JANGAN import** di Client Components (`'use client'`)
-- `SUPABASE_SERVICE_ROLE_KEY` bypass RLS — server-only, jangan pernah expose ke browser
+- `SUPABASE_SERVICE_ROLE_KEY` bypass RLS — ini adalah keputusan desain pragmatis yang disengaja untuk Phase 1 tanpa auth UI publik. Dilindungi oleh:
+  1. Module `server-only`
+  2. Validasi Origin/Referer guard & `isRequestAuthorized()` di `src/app/actions.ts`
+  3. Pseudonimisasi audit log SHA-256 (`src/lib/audit-trail.ts`) sesuai kepatuhan UU PDP No. 27/2022
 - Client Components hanya boleh memanggil Server Actions (`src/app/actions.ts`) atau Route Handlers (`src/app/api/`)
+
+### Invarian untuk AI Agent & Roadmap Migrasi Phase 2:
+- **DILARANG** mengekspos `SUPABASE_SERVICE_ROLE_KEY` ke client bundle atau membuat Supabase client di Client Component.
+- **DILARANG** melakukan hard-delete pada tabel `jobs` (gunakan soft-expire via `expires_at`).
+- **Prasyarat Phase 2 (Multi-User Publik):** Sebelum pendaftaran publik dibuka, sistem wajib direfaktorisasi menggunakan `@supabase/ssr` berbasis cookie session HTTP-Only, mengganti `supabase` service_role di Server Actions dengan scoped user client, dan mengaktifkan RLS berbasis `auth.uid() = profile_id`.
 ## Database Schema
 
 4 tabel di Supabase public schema:
