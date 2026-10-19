@@ -26,7 +26,7 @@ export interface AuthContextValue {
   closeAuthModal: () => void
   signOut: () => Promise<void>
   refreshSession: () => Promise<void>
-  setLocalApplication: (jobId: string, status: ApplicationStatus, notes?: string | null) => void
+  setLocalApplication: (jobId: string, status: ApplicationStatus | null, notes?: string | null) => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -124,14 +124,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const setLocalApplication = useCallback(
-    (jobId: string, status: ApplicationStatus, notes?: string | null) => {
-      setApplications((prev) => ({
-        ...prev,
-        [jobId]: {
-          status,
-          notes: notes !== undefined ? notes : prev[jobId]?.notes ?? null,
-        },
-      }))
+    (jobId: string, status: ApplicationStatus | null, notes?: string | null) => {
+      setApplications((prev) => {
+        if (status === null) {
+          const next = { ...prev }
+          delete next[jobId]
+          return next
+        }
+        return {
+          ...prev,
+          [jobId]: {
+            status,
+            notes: notes !== undefined ? notes : prev[jobId]?.notes ?? null,
+          },
+        }
+      })
     },
     []
   )

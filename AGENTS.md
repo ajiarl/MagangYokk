@@ -59,24 +59,23 @@ npm run build   # production build
 npm run lint    # ESLint
 ```
 
-## Arsitektur Akses Data & Batas Keamanan (Phase 1 Single-User MVP)
+## Arsitektur Akses Data & Batas Keamanan (Phase 2 Multi-Tenant SSR)
 
-**STATUS ARSITEKTUR:** Platform saat ini berstatus **Phase 1 Single-User MVP** untuk pengoperasian mandiri solo-developer (Aji Arlando).
+**STATUS ARSITEKTUR:** Platform saat ini berstatus **Phase 2 Multi-Tenant** dengan integrasi autentikasi penuh `@supabase/ssr`.
 
-**PENTING:** Semua Supabase query menggunakan `@supabase/supabase-js` dan wajib dijalankan di **server-side** (Server Components, Server Actions, Route Handlers).
+**PENTING:**
+- **SSR Auth & Cookie Session:** Cookie autentikasi dikelola oleh `@supabase/ssr` secara terstandarisasi (`SameSite=Lax`, `Secure` di production) untuk menjembatani sinkronisasi session antara Server Components dan Browser Client.
+- **Server Client Factory:** Gunakan `import { createClient } from '@/lib/supabase/server'` pada Server Components, Server Actions, dan Route Handlers.
+- **Browser Client Factory:** Gunakan `import { createClient } from '@/lib/supabase/client'` pada Client Components (`'use client'`).
+- **Session Refresh Middleware:** `src/middleware.ts` menyegarkan token sesi (`supabase.auth.getUser()`) pada setiap request navigasi secara non-blocking.
+- **Strict RLS & Resource Ownership:** Seluruh Server Actions dan Route Handlers mengecek identitas sah via `supabase.auth.getUser()` dan hanya mengakses data dengan relasi `user_id = user.id`.
+- **Public Feed ISR Preservation:** Rute `/` di-cache sebagai ISR (`revalidate = 300`) dengan data loker publik murni, sementara status lamaran terhidrasi secara aman dan dinamis di sisi klien via `getUserSessionAndApplications()`.
+- Pseudonimisasi audit log SHA-256 (`src/lib/audit-trail.ts`) sesuai kepatuhan UU PDP No. 27/2022.
 
-- Gunakan `import { supabase } from '@/lib/supabase'`
-- `src/lib/supabase.ts` dilindungi oleh `import 'server-only'` — **JANGAN import** di Client Components (`'use client'`)
-- `SUPABASE_SERVICE_ROLE_KEY` bypass RLS — ini adalah keputusan desain pragmatis yang disengaja untuk Phase 1 tanpa auth UI publik. Dilindungi oleh:
-  1. Module `server-only`
-  2. Validasi Origin/Referer guard & `isRequestAuthorized()` di `src/app/actions.ts`
-  3. Pseudonimisasi audit log SHA-256 (`src/lib/audit-trail.ts`) sesuai kepatuhan UU PDP No. 27/2022
-- Client Components hanya boleh memanggil Server Actions (`src/app/actions.ts`) atau Route Handlers (`src/app/api/`)
-
-### Invarian untuk AI Agent & Roadmap Migrasi Phase 2:
-- **DILARANG** mengekspos `SUPABASE_SERVICE_ROLE_KEY` ke client bundle atau membuat Supabase client di Client Component.
+### Invarian untuk AI Agent:
+- **DILARANG** mengekspos `SUPABASE_SERVICE_ROLE_KEY` ke client bundle.
+- **DILARANG** menggunakan query tebakan profil `.limit(1)` — selalu ikat ke `user_id = user.id`.
 - **DILARANG** melakukan hard-delete pada tabel `jobs` (gunakan soft-expire via `expires_at`).
-- **Prasyarat Phase 2 (Multi-User Publik):** Sebelum pendaftaran publik dibuka, sistem wajib direfaktorisasi menggunakan `@supabase/ssr` berbasis cookie session HTTP-Only, mengganti `supabase` service_role di Server Actions dengan scoped user client, dan mengaktifkan RLS berbasis `auth.uid() = profile_id`.
 ## Database Schema
 
 4 tabel di Supabase public schema:

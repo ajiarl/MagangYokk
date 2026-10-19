@@ -110,13 +110,20 @@ export async function POST(req: NextRequest) {
     }
 
     // 2b. Ambil status aplikasi eksisting (jika sudah pernah apply/melamar)
-    const { data: existingApp } = await supabase
+    const { data: existingApp, error: appError } = await supabase
       .from("applications")
       .select("status, cover_letter_draft, cover_letter_lang")
       .eq("job_id", job.id)
       .eq("profile_id", profile.id)
       .maybeSingle()
 
+    if (appError) {
+      console.error("Gagal memeriksa aplikasi eksisting:", appError)
+      return NextResponse.json(
+        { error: `Gagal membaca data aplikasi: ${appError.message}` },
+        { status: 500 }
+      )
+    }
     // Token Idempotency Check: jika draft sudah ada dengan bahasa yang sama dan tidak dipaksa regenerate
     if (!regenerate && existingApp?.cover_letter_draft && existingApp?.cover_letter_lang === selectedLang) {
       return NextResponse.json({

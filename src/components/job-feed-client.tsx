@@ -48,8 +48,8 @@ export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientPro
       const userApp = applications[j.id]
       return {
         ...j,
-        applicationStatus: userApp ? userApp.status : j.applicationStatus ?? null,
-        applicationNotes: userApp ? userApp.notes : j.applicationNotes ?? null,
+        applicationStatus: userApp ? userApp.status : null,
+        applicationNotes: userApp ? userApp.notes : null,
       }
     })
   }, [initialJobs, applications])
@@ -74,9 +74,7 @@ export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientPro
       const res = await updateJobStatus(jobId, newStatus)
       if (!res.success) {
         toast.error("Gagal update status: " + res.error)
-        if (previousStatus) {
-          setLocalApplication(jobId, previousStatus)
-        }
+        setLocalApplication(jobId, previousStatus)
       }
     })
   }

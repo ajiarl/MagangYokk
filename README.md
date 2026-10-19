@@ -244,24 +244,16 @@ Repositori ini telah diaudit secara komprehensif melalui 14 modul evaluasi tekni
 
 ---
 
-## 8. Keamanan & Batas Arsitektur (Single-User vs Multi-User)
+## 8. Keamanan & Batas Arsitektur (Phase 2 Multi-Tenant SSR)
 
-### Rasional Desain Phase 1 (Single-User MVP)
-Penggunaan `SUPABASE_SERVICE_ROLE_KEY` pada Server Actions di `src/app/actions.ts` adalah keputusan arsitektur yang disengaja (*intentional architectural choice*) untuk menyederhanakan MVP tanpa overhead implementasi UI autentikasi publik (login, register, token refresh, password reset).
-
-### Lapisan Pertahanan Saat Ini (Defense in Depth)
-1. **Isolasi Modul `server-only`:** Mencegah kebocoran kredensial rahasia ke bundle browser client.
-2. **Origin & Referer Guard:** Memeriksa kesesuaian host domain pengirim pada setiap mutasi Server Action untuk mencegah eksekusi CSRF / unauthenticated cross-origin invocation.
-3. **Internal Action Secret:** Header `x-action-secret` opsional untuk membatasi pemanggilan antar-layanan atau worker daemon eksternal.
-4. **Pseudonimisasi Audit Trail SHA-256:** Kepatuhan terhadap UU PDP No. 27/2022 dengan melakukan hashing alamat IP pengguna pada tabel `audit_logs` tanpa menyimpan PII mentah.
-
-### Roadmap Phase 2: Transisi ke Multi-User Publik
-Sebelum pendaftaran akun dibuka untuk masyarakat umum, sistem **wajib** melalui tahapan refaktorisasi keamanan berikut:
-1. **Supabase Auth (`@supabase/ssr`):** Mengganti profil tunggal hardcoded dengan sistem registrasi/login berbasis cookie HTTP-Only (`sb-...-auth-token`).
-2. **Scoped Supabase Client:** Menghapus penggunaan `SUPABASE_SERVICE_ROLE_KEY` pada Server Actions pengguna, menggantinya dengan Supabase client berkonteks token sesi pengguna (`createClient` dengan server cookies).
-3. **Enforcement RLS PostgreSQL:** Mengaktifkan kebijakan RLS berbasis `auth.uid() = profile_id` secara ketat pada tabel `applications` dan `profiles`.
-4. **Integritas Relasi Database:** Menghubungkan kolom `profiles.id` langsung ke `auth.users(id) ON DELETE CASCADE`.
-
+### Implementasi Autentikasi & Manajemen Sesi Sisi Server
+MagangYokk mengadopsi autentikasi multi-tenant modern dengan `@supabase/ssr`:
+1. **Standarisasi Cookie Sesi HTTP-Only:** Cookie autentikasi dikelola oleh `@supabase/ssr` secara terstandarisasi (`SameSite=Lax`, `Secure` di production) untuk menjembatani sinkronisasi session antara Server Components dan Browser Client.
+2. **Scoped User Context & Anti-BOLA:** Seluruh Server Actions (`src/app/actions.ts`) dan Route Handlers mengekstrak identitas kanonikal melalui `supabase.auth.getUser()`, mengikat mutasi secara eksklusif ke `user.id` pengguna, dan mengeliminasi tebak-tebakan profil `.limit(1)`.
+3. **Penyegaran Token Otomatis:** Middleware (`src/middleware.ts`) menyegarkan token JWT pengguna secara non-blocking pada setiap permintaan navigasi.
+4. **Enforcement RLS PostgreSQL:** Kebijakan RLS berbasis `auth.uid() = user_id` aktif pada tabel `profiles` dan `applications`.
+5. **Pemisahan Cache Publik vs Hidrasi Privat:** Rute beranda `/` di-cache sebagai ISR (`revalidate = 300`) untuk data lowongan publik, sedangkan data pelacakan lamaran pengguna terhidrasi secara terisolasi di sisi browser.
+6. **Pseudonimisasi Audit Trail SHA-256:** Kepatuhan terhadap UU PDP No. 27/2022 dengan melakukan hashing alamat IP pengguna pada tabel `audit_logs` tanpa menyimpan PII mentah.
 ---
 
 ## 9. Pembuat & Lisensi
