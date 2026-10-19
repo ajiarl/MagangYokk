@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { X, Loader2, Copy, Check, RotateCcw, Save } from "lucide-react"
 import { toast } from "sonner"
@@ -25,6 +25,14 @@ export function CoverLetterModal({
   const [lang, setLang] = useState<"id" | "en">("id")
   const [isSaving, setIsSaving] = useState(false)
 
+  const onStatusChangeRef = useRef(onStatusChange)
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange
+  }, [onStatusChange])
+
+  const jobId = job?.id
+  const hasAppStatus = Boolean(job && "applicationStatus" in job && job.applicationStatus)
+
   const generateCoverLetter = useCallback(
     async (targetJob: Job, selectedLang: "id" | "en", regenerate = false) => {
       setLoading(true)
@@ -40,8 +48,8 @@ export function CoverLetterModal({
         const data = (await res.json()) as { draft?: string; error?: string }
         if (data.draft) {
           setDraft(data.draft)
-          if (!("applicationStatus" in targetJob && targetJob.applicationStatus) && onStatusChange) {
-            onStatusChange(targetJob.id, "saved")
+          if (!("applicationStatus" in targetJob && targetJob.applicationStatus)) {
+            onStatusChangeRef.current?.(targetJob.id, "saved")
           }
         } else {
           toast.error(data.error || "Gagal generate cover letter")
@@ -53,27 +61,27 @@ export function CoverLetterModal({
         setLoading(false)
       }
     },
-    [onStatusChange]
+    []
   )
 
   useEffect(() => {
     let ignore = false
-    if (!isOpen || !job) {
+    if (!isOpen || !jobId) {
       return
     }
 
     fetch("/api/cover-letter", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId: job.id, lang: "id" })
+      body: JSON.stringify({ jobId, lang: "id" })
     })
       .then((res) => res.json())
       .then((data: { draft?: string; error?: string }) => {
         if (ignore) return
         if (data.draft) {
           setDraft(data.draft)
-          if (!("applicationStatus" in job && job.applicationStatus) && onStatusChange) {
-            onStatusChange(job.id, "saved")
+          if (!hasAppStatus) {
+            onStatusChangeRef.current?.(jobId, "saved")
           }
         } else {
           toast.error(data.error || "Gagal generate cover letter")
@@ -93,7 +101,7 @@ export function CoverLetterModal({
     return () => {
       ignore = true
     }
-  }, [isOpen, job, onStatusChange])
+  }, [isOpen, jobId, hasAppStatus])
 
   function handleCopy() {
     if (!draft) return

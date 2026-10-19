@@ -213,12 +213,22 @@ INSTRUKSI:
     const groqData = await groqRes.json()
     const draft = groqData.choices?.[0]?.message?.content || ""
 
-    // 5. Upsert draft ke tabel applications di Supabase dengan pengecekan dbError eksplisit
+    // 5. Query ulang status aplikasi mutakhir untuk mencegah race condition (misal: user mengubah status saat AI generate)
+    const { data: latestApp } = await supabase
+      .from("applications")
+      .select("status")
+      .eq("job_id", job.id)
+      .eq("profile_id", profile.id)
+      .maybeSingle()
+
+    const finalStatus = latestApp?.status ?? existingApp?.status ?? "saved"
+
+    // Upsert draft ke tabel applications di Supabase dengan pengecekan dbError eksplisit
     const { error: dbError } = await supabase.from("applications").upsert(
       {
         job_id: job.id,
         profile_id: profile.id,
-        status: existingApp?.status ?? "saved",
+        status: finalStatus,
         cover_letter_draft: draft,
         cover_letter_lang: selectedLang,
         updated_at: new Date().toISOString()

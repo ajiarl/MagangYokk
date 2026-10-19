@@ -198,6 +198,22 @@ describe("getJobEduCategory", () => {
       })
       expect(result).toBe("intern")
     })
+
+    it("25. Mengutamakan 'intern' untuk frasa 'program sarjana' bagi mahasiswa aktif", () => {
+      const result = getJobEduCategory({
+        title: "Frontend Intern",
+        description: "Mahasiswa aktif program sarjana semester 6",
+      })
+      expect(result).toBe("intern")
+    })
+
+    it("26. Mengabaikan fresh graduate ketika terdapat frasa negasi 'bukan fresh graduate'", () => {
+      const result = getJobEduCategory({
+        title: "Frontend Intern",
+        description: "Khusus mahasiswa aktif, bukan fresh graduate",
+      })
+      expect(result).toBe("intern")
+    })
   })
 })
 

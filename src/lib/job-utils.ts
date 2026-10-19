@@ -10,6 +10,13 @@ export type JobEduCategory = "intern" | "freshgrad"
 export function getJobEduCategory(job: Pick<Job, "title" | "description">): JobEduCategory {
   const text = `${job.title} ${job.description || ""}`.toLowerCase()
 
+  // Deteksi frasa mahasiswa sarjana (merujuk pada mahasiswa aktif jenjang S1)
+  const hasStudentSarjana =
+    text.includes("program sarjana") ||
+    text.includes("jenjang sarjana") ||
+    text.includes("kuliah sarjana") ||
+    text.includes("mahasiswa sarjana")
+
   // Sinyal kuat magang mahasiswa aktif
   const isInternKeywords =
     text.includes("intern") ||
@@ -18,14 +25,31 @@ export function getJobEduCategory(job: Pick<Job, "title" | "description">): JobE
     text.includes("student") ||
     text.includes("mahasiswa") ||
     text.includes("kuliah") ||
-    text.includes("semester")
+    text.includes("semester") ||
+    hasStudentSarjana
+
+  // Bersihkan frasa negasi fresh graduate dan frasa mahasiswa sarjana
+  // agar tidak keliru memicu kata kunci kelulusan
+  const textForGradCheck = text
+    .replace(/bukan\s+(?:untuk\s+)?fresh\s*graduate/g, "")
+    .replace(/tidak\s+(?:untuk\s+)?fresh\s*graduate/g, "")
+    .replace(/not\s+for\s+fresh\s*graduate/g, "")
+    .replace(/bukan\s+(?:untuk\s+)?freshgrad/g, "")
+    .replace(/tidak\s+(?:untuk\s+)?freshgrad/g, "")
+    .replace(/not\s+for\s+freshgrad/g, "")
+    .replace(/bukan\s+(?:untuk\s+)?lulusan/g, "")
+    .replace(/tidak\s+(?:untuk\s+)?lulusan/g, "")
+    .replace(/program\s+sarjana/g, "")
+    .replace(/jenjang\s+sarjana/g, "")
+    .replace(/kuliah\s+sarjana/g, "")
+    .replace(/mahasiswa\s+sarjana/g, "")
 
   // Sinyal spesifik kualifikasi lulusan / sarjana
   const isExplicitGradKeywords =
-    text.includes("fresh graduate") ||
-    text.includes("freshgrad") ||
-    text.includes("lulusan") ||
-    text.includes("sarjana")
+    textForGradCheck.includes("fresh graduate") ||
+    textForGradCheck.includes("freshgrad") ||
+    textForGradCheck.includes("lulusan") ||
+    textForGradCheck.includes("sarjana")
 
   // Jenjang pendidikan formal (bisa berlaku untuk mahasiswa aktif maupun lulusan)
   const isDegreeKeywords =

@@ -30,8 +30,8 @@ begin
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
-    array['next.js', 'react', 'typescript'],
-    array['frontend', 'fullstack'],
+    array[]::text[],
+    array[]::text[],
     true,
     false,
     6.0
