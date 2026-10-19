@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { Sparkles, MapPin, Building2, ExternalLink, Calendar, GripVertical, FileText, Target } from "lucide-react"
+import { getScoreBadgeClasses } from "@/lib/job-utils"
 import { NotesDrawerModal } from "@/components/notes-drawer-modal"
 import { GapAnalysisModal } from "@/components/gap-analysis-modal"
 
@@ -153,8 +154,8 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
                     </div>
 
                     {score && (
-                      <div className="shrink-0 flex items-center gap-0.5 text-[10px] font-mono font-medium text-[#7170ff] bg-[#5e6ad2]/10 border border-[#5e6ad2]/20 px-1.5 py-0.5 rounded-md">
-                        <Sparkles className="w-2.5 h-2.5" />
+                      <div className={`shrink-0 flex items-center gap-0.5 text-[10px] font-mono font-medium border px-1.5 py-0.5 rounded-md ${getScoreBadgeClasses(Number(score))}`}>
+                        <Sparkles className="w-2.5 h-2.5 opacity-80" />
                         <span>{score}</span>
                       </div>
                     )}

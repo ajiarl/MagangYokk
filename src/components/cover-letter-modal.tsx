@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { X, Loader2, Copy, Check, RotateCcw } from "lucide-react"
+import { X, Loader2, Copy, Check, RotateCcw, Save } from "lucide-react"
 import { toast } from "sonner"
+import { updateCoverLetterDraft } from "@/app/actions"
 
 export interface CoverLetterModalProps {
   job: (Job & { applicationStatus?: ApplicationStatus | null }) | null
@@ -22,6 +23,7 @@ export function CoverLetterModal({
   const [draft, setDraft] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [lang, setLang] = useState<"id" | "en">("id")
+  const [isSaving, setIsSaving] = useState(false)
 
   const generateCoverLetter = useCallback(
     async (targetJob: Job, selectedLang: "id" | "en", regenerate = false) => {
@@ -101,6 +103,24 @@ export function CoverLetterModal({
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function handleSaveDraft() {
+    if (!draft || !job) return
+    setIsSaving(true)
+    try {
+      const res = await updateCoverLetterDraft(job.id, draft, lang)
+      if (res.success) {
+        toast.success("Perubahan cover letter berhasil disimpan")
+      } else {
+        toast.error("Gagal menyimpan perubahan: " + (res.error || "Terjadi kesalahan"))
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      toast.error("Error: " + message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (!isOpen || !job) {
     return null
   }
@@ -171,8 +191,19 @@ export function CoverLetterModal({
               <p className="text-xs text-[#8a8f98]">Menyusun draf autentik berbasis profil kamu...</p>
             </div>
           ) : draft ? (
-            <div className="bg-[#08090a] p-4 sm:p-5 rounded-xl border border-white/[0.06] text-xs font-mono leading-relaxed whitespace-pre-wrap text-[#d0d6e0] selection:bg-[#5e6ad2]/30">
-              {draft}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[11px] text-[#8a8f98] font-mono px-1">
+                <span>Draf dapat diedit langsung:</span>
+                <span>{draft.length} karakter</span>
+              </div>
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                rows={12}
+                className="w-full bg-[#08090a] p-4 sm:p-5 rounded-xl border border-white/[0.06] text-xs font-mono leading-relaxed text-[#d0d6e0] selection:bg-[#5e6ad2]/30 focus:outline-none focus:border-white/[0.2] transition-colors resize-y min-h-[240px]"
+                placeholder="Tulis atau edit draf cover letter di sini..."
+                aria-label="Isi draf cover letter"
+              />
             </div>
           ) : (
             <div className="py-16 text-center text-xs text-[#8a8f98]">
@@ -203,6 +234,15 @@ export function CoverLetterModal({
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copied ? "Tersalin!" : "Salin Surat"}</span>
+            </button>
+            <button
+              disabled={!draft || loading || isSaving}
+              onClick={handleSaveDraft}
+              className="h-9 px-3.5 inline-flex items-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-[#d0d6e0] font-medium rounded-lg transition-colors touch-manipulation active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
+              title="Simpan perubahan draf cover letter"
+            >
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#7170ff]" /> : <Save className="w-3.5 h-3.5" />}
+              <span>{isSaving ? "Menyimpan..." : "Simpan"}</span>
             </button>
             <button
               onClick={onClose}

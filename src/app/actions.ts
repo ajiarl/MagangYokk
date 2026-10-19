@@ -194,3 +194,64 @@ export async function updateApplicationNotes(
     return { success: false, error: message }
   }
 }
+
+export async function updateCoverLetterDraft(
+  jobId: string,
+  draft: string,
+  lang: "id" | "en" = "id"
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!(await isRequestAuthorized())) {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    const trimmedJobId = typeof jobId === "string" ? jobId.trim() : ""
+    if (!trimmedJobId || trimmedJobId.length > 128) {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    if (typeof draft !== "string") {
+      return { success: false, error: "Akses ditolak atau input tidak valid." }
+    }
+
+    const validatedDraft = draft.slice(0, 10000)
+
+    const profile = await resolveAuthenticatedProfile()
+    if (!profile) {
+      return { success: false, error: "Profil tidak ditemukan." }
+    }
+
+    const payload: Record<string, string> = {
+      job_id: trimmedJobId,
+      profile_id: profile.id,
+      cover_letter_draft: validatedDraft,
+      cover_letter_lang: lang === "en" ? "en" : "id",
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error } = await supabase
+      .from("applications")
+      .upsert(payload, { onConflict: "job_id,profile_id" })
+
+    if (error) {
+      console.error("Gagal update cover letter draft:", error)
+      return { success: false, error: error.message }
+    }
+
+    const headerList = await headers()
+    const rawIp = headerList.get("x-forwarded-for")?.split(",")[0] || headerList.get("x-real-ip")
+    await recordAuditLog({
+      actionType: "COVER_LETTER_UPDATE",
+      entityId: trimmedJobId,
+      payloadSummary: { draftLength: validatedDraft.length, lang },
+      rawIp,
+    })
+
+    revalidatePath("/")
+    return { success: true }
+  } catch (err: unknown) {
+    console.error("Server Action updateCoverLetterDraft error:", err)
+    const message = err instanceof Error ? err.message : "Internal server error"
+    return { success: false, error: message }
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
-import { getJobEduCategory } from "@/lib/job-utils"
+import { getJobEduCategory, getScoreBadgeClasses } from "@/lib/job-utils"
 import { Sparkles, MapPin, Building2, FileText, ArrowUpRight, Target } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 import { toast } from "sonner"
@@ -60,7 +60,8 @@ export function JobCard({
           </div>
 
           {score && (
-            <div className="shrink-0 flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded text-[11px] font-mono text-[#d0d6e0]">
+            <div className={`shrink-0 flex items-center gap-1 border px-2 py-0.5 rounded text-[11px] font-mono font-medium ${getScoreBadgeClasses(Number(score))}`}>
+              <Sparkles className="w-2.5 h-2.5 opacity-80" />
               <span>{score}</span>
             </div>
           )}

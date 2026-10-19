@@ -3,6 +3,7 @@ import { MessageSquarePlus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
+import { formatRelativeTime } from "@/lib/job-utils"
 export const revalidate = 300
 
 type RawJobRecord = Job & {
@@ -66,6 +67,12 @@ export default async function Home() {
     getProfile()
   ])
 
+  const latestScrapedAt = jobsWithApps.reduce<string | null>((latest, job) => {
+    if (!job.scraped_at) return latest
+    if (!latest) return job.scraped_at
+    return new Date(job.scraped_at) > new Date(latest) ? job.scraped_at : latest
+  }, null)
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -124,6 +131,18 @@ export default async function Home() {
             <h1 className="font-semibold text-[13px] tracking-tight text-[#f7f8f8]">MagangYokk</h1>
             <span className="text-[11px] font-mono text-[#8a8f98]">/</span>
             <span className="text-xs text-[#8a8f98] font-mono">{jobsWithApps.length} opportunities</span>
+            {latestScrapedAt && (
+              <>
+                <span className="hidden sm:inline text-[11px] font-mono text-[#8a8f98]">/</span>
+                <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-[#8a8f98]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span suppressHydrationWarning>Sinkronisasi: {formatRelativeTime(latestScrapedAt)}</span>
+                </div>
+              </>
+            )}
           </div>
 
           {profile && (
@@ -144,7 +163,7 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
         />
         {/* Client Search, Filters, Tabs & Grid */}
-        <JobFeedClient initialJobs={jobsWithApps} />
+        <JobFeedClient initialJobs={jobsWithApps} latestScrapedAt={latestScrapedAt} />
       </main>
 
       {/* Footer */}

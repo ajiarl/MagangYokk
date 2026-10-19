@@ -9,7 +9,7 @@ import { ResumeUploadModal } from "@/components/resume-upload-modal"
 import { NotesDrawerModal } from "@/components/notes-drawer-modal"
 import { GapAnalysisModal } from "@/components/gap-analysis-modal"
 import { CoverLetterModal } from "@/components/cover-letter-modal"
-import { getJobEduCategory } from "@/lib/job-utils"
+import { getJobEduCategory, formatRelativeTime } from "@/lib/job-utils"
 import {
   Search,
   RefreshCw,
@@ -22,6 +22,7 @@ import { toast } from "sonner"
 
 interface JobFeedClientProps {
   initialJobs: (Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]
+  latestScrapedAt?: string | null
 }
 
 const TECH_TAGS = ["Next.js", "React", "TypeScript", "Laravel", "Supabase", "MySQL", "PHP"]
@@ -29,11 +30,11 @@ const TECH_TAGS = ["Next.js", "React", "TypeScript", "Laravel", "Supabase", "MyS
 type EducationTarget = "all" | "intern" | "freshgrad"
 type ViewMode = "feed" | "kanban"
 
-export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
+export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("feed")
   const [filter, setFilter] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTech, setSelectedTech] = useState<string | null>(null)
+  const [selectedTech, setSelectedTech] = useState<string[]>([])
   const [eduTarget, setEduTarget] = useState<EducationTarget>("all")
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
   const [coverLetterJob, setCoverLetterJob] = useState<Job | null>(null)
@@ -42,6 +43,12 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
 
   const [jobs, setJobs] = useState(initialJobs)
   const [, startTransition] = useTransition()
+
+  function handleTechToggle(tech: string) {
+    setSelectedTech((prev) =>
+      prev.includes(tech) ? prev.filter((t) => t !== tech) : [...prev, tech]
+    )
+  }
 
   function handleStatusChange(jobId: string, newStatus: ApplicationStatus) {
     const previousStatus = jobs.find((j) => j.id === jobId)?.applicationStatus
@@ -107,12 +114,17 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
     }
 
     // 3. Tech Stack Filter
-    if (selectedTech) {
-      const t = selectedTech.toLowerCase()
-      const inDesc = job.description?.toLowerCase().includes(t)
-      const inTitle = job.title.toLowerCase().includes(t)
-      const inBreakdown = job.score_breakdown && Object.keys(job.score_breakdown).some((k) => k.includes(t))
-      if (!inDesc && !inTitle && !inBreakdown) return false
+    if (selectedTech.length > 0) {
+      const matchesAll = selectedTech.every((tech) => {
+        const t = tech.toLowerCase()
+        const inDesc = job.description?.toLowerCase().includes(t)
+        const inTitle = job.title.toLowerCase().includes(t)
+        const inBreakdown =
+          job.score_breakdown &&
+          Object.keys(job.score_breakdown).some((k) => k.toLowerCase().includes(t))
+        return inDesc || inTitle || inBreakdown
+      })
+      if (!matchesAll) return false
     }
 
     // 4. Education / Graduation Target Filter
@@ -219,16 +231,26 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
           </button>
         </div>
       </div>
+      {/* Mobile Scraper Sync Badge */}
+      {latestScrapedAt && (
+        <div className="sm:hidden flex items-center gap-1.5 text-[10.5px] font-mono text-[#8a8f98] pb-0.5 px-0.5">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+          </span>
+          <span suppressHydrationWarning>Sinkronisasi: {formatRelativeTime(latestScrapedAt)}</span>
+        </div>
+      )}
 
       {/* Tech Stack Horizontal Filter Strip */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px] font-mono">
         <span className="text-[#8a8f98] shrink-0 mr-1">Stack:</span>
         {TECH_TAGS.map((tech) => {
-          const isSelected = selectedTech === tech
+          const isSelected = selectedTech.includes(tech)
           return (
             <button
               key={tech}
-              onClick={() => setSelectedTech(isSelected ? null : tech)}
+              onClick={() => handleTechToggle(tech)}
               className={`px-2 py-0.5 rounded transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-1 focus-visible:ring-offset-[#08090a] ${
                 isSelected
                   ? "bg-white/[0.12] text-white border border-white/[0.2]"
@@ -239,12 +261,12 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
             </button>
           )
         })}
-        {selectedTech && (
+        {selectedTech.length > 0 && (
           <button
-            onClick={() => setSelectedTech(null)}
-            className="text-[10px] text-rose-400 hover:text-rose-300 ml-1 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] rounded"
+            onClick={() => setSelectedTech([])}
+            className="text-[10px] text-rose-400 hover:text-rose-300 ml-1 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] rounded shrink-0"
           >
-            reset
+            Reset Stack{selectedTech.length > 1 ? ` (${selectedTech.length})` : ""}
           </button>
         )}
       </div>
@@ -282,7 +304,7 @@ export function JobFeedClient({ initialJobs }: JobFeedClientProps) {
                 type="button"
                 onClick={() => {
                   setSearchQuery("")
-                  setSelectedTech(null)
+                  setSelectedTech([])
                   setEduTarget("all")
                   setFilter("all")
                 }}
