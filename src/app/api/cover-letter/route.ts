@@ -159,10 +159,10 @@ Gaya bahasa: Profesional santun, percaya diri berbasis fakta nyata, tidak bertel
     const userPrompt = `
 KANDIDAT:
 - Nama: ${profile.full_name}
-- Skill Utama: ${profile.skills?.join(", ") || "Next.js, React, Laravel, TypeScript, Supabase, MySQL"}
-- Portfolio: ${profile.portfolio_url || "https://ajiarlando.my.id"}
-- GitHub: ${profile.github_url || "https://github.com/ajiarlando"}
-- Bio / Background Singkat: ${profile.bio || "Mahasiswa Sistem Informasi aktif membangun aplikasi web modern"}
+- Skill Utama: ${Array.isArray(profile.skills) && profile.skills.length > 0 ? profile.skills.join(", ") : "-"}
+- Portfolio: ${profile.portfolio_url || "-"}
+- GitHub: ${profile.github_url || "-"}
+- Bio / Background Singkat: ${profile.bio || "-"}
 
 LOWONGAN:
 - Posisi: ${job.title}

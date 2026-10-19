@@ -97,7 +97,7 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
   }
 
   function renderColumn(col: ColumnConfig) {
-    const colJobs = jobs.filter((j) => (j.applicationStatus || "saved") === col.id)
+    const colJobs = jobs.filter((j) => Boolean(j.applicationStatus) && j.applicationStatus === col.id)
     const isOver = dragOverCol === col.id
 
     return (
@@ -265,7 +265,7 @@ export function KanbanBoard({ jobs, onStatusChange, onNotesChange }: KanbanBoard
       {/* Mobile Column Segmented Tabs */}
       <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-3 mb-3 scrollbar-none">
         {COLUMNS.map((col) => {
-          const count = jobs.filter((j) => (j.applicationStatus || "saved") === col.id).length
+          const count = jobs.filter((j) => Boolean(j.applicationStatus) && j.applicationStatus === col.id).length
           const isActive = activeMobileCol === col.id
           return (
             <button

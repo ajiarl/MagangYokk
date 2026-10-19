@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { X, FileText, Check, Loader2 } from "lucide-react"
 import { updateApplicationNotes } from "@/app/actions"
 import { toast } from "sonner"
-
+import { useAuth } from "@/components/auth-context"
 interface NotesDrawerModalProps {
   jobId: string
   jobTitle: string
@@ -14,8 +14,6 @@ interface NotesDrawerModalProps {
   onClose: () => void
   onSaveNotes: (notes: string) => void
 }
-const DRAFT_KEY_PREFIX = "magangyokk_draft_notes_"
-
 
 export function NotesDrawerModal({
   jobId,
@@ -26,7 +24,8 @@ export function NotesDrawerModal({
   onClose,
   onSaveNotes
 }: NotesDrawerModalProps) {
-  const storageKey = `${DRAFT_KEY_PREFIX}${jobId}`
+  const { user } = useAuth()
+  const storageKey = `magangyokk_draft_notes_${user?.id || "guest"}_${jobId}`
   const [notes, setNotes] = useState(initialNotes || "")
   const [isSaving, setIsSaving] = useState(false)
   const [savedSuccess, setSavedSuccess] = useState(false)

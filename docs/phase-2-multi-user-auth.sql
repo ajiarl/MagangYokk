@@ -8,6 +8,9 @@ alter table public.profiles
   add constraint profiles_user_id_fkey 
   foreign key (user_id) references auth.users(id) on delete cascade;
 
+alter table public.profiles 
+  add constraint profiles_user_id_unique unique (user_id);
+
 -- 2. Trigger function to automatically create profile row when user signs up
 create or replace function public.handle_new_user()
 returns trigger

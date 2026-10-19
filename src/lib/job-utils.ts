@@ -10,32 +10,47 @@ export type JobEduCategory = "intern" | "freshgrad"
 export function getJobEduCategory(job: Pick<Job, "title" | "description">): JobEduCategory {
   const text = `${job.title} ${job.description || ""}`.toLowerCase()
 
-  // Strong signals for active college / university student internship
+  // Sinyal kuat magang mahasiswa aktif
   const isInternKeywords =
     text.includes("intern") ||
     text.includes("magang") ||
     text.includes("pkl") ||
     text.includes("student") ||
     text.includes("mahasiswa") ||
-    text.includes("kuliah")
+    text.includes("kuliah") ||
+    text.includes("semester")
 
-  // Strong signals for fresh graduates / degree holders
-  const isGradKeywords =
+  // Sinyal spesifik kualifikasi lulusan / sarjana
+  const isExplicitGradKeywords =
     text.includes("fresh graduate") ||
     text.includes("freshgrad") ||
     text.includes("lulusan") ||
-    text.includes("sarjana") ||
+    text.includes("sarjana")
+
+  // Jenjang pendidikan formal (bisa berlaku untuk mahasiswa aktif maupun lulusan)
+  const isDegreeKeywords =
     text.includes("s1") ||
     text.includes("d3") ||
     text.includes("bachelor")
 
-  if (isInternKeywords && !isGradKeywords) {
+  // Utamakan "intern" jika mengandung kata kunci magang mahasiswa, meskipun terdapat kata "s1" atau "d3"
+  if (isInternKeywords) {
+    if (isExplicitGradKeywords) {
+      return "freshgrad"
+    }
     return "intern"
   }
-  if (isGradKeywords || (!isInternKeywords && (text.includes("junior") || text.includes("entry")))) {
+
+  if (
+    isExplicitGradKeywords ||
+    isDegreeKeywords ||
+    text.includes("junior") ||
+    text.includes("entry")
+  ) {
     return "freshgrad"
   }
-  return isInternKeywords ? "intern" : "freshgrad"
+
+  return "freshgrad"
 }
 
 /**

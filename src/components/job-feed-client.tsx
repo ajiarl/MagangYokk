@@ -162,7 +162,9 @@ export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientPro
         const inTitle = job.title.toLowerCase().includes(t)
         const inBreakdown =
           job.score_breakdown &&
-          Object.keys(job.score_breakdown).some((k) => k.toLowerCase().includes(t))
+          Object.entries(job.score_breakdown).some(
+            ([k, val]) => Boolean(val) && k.toLowerCase().includes(t)
+          )
         return inDesc || inTitle || inBreakdown
       })
       if (!matchesAll) return false

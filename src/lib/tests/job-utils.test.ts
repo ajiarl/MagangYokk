@@ -182,6 +182,22 @@ describe("getJobEduCategory", () => {
       })
       expect(result).toBe("freshgrad")
     })
+
+    it("23. Mengutamakan 'intern' jika mengandung kata kunci magang mahasiswa meskipun terdapat kata 's1' atau 'd3'", () => {
+      const result = getJobEduCategory({
+        title: "Frontend Intern",
+        description: "Terbuka untuk mahasiswa aktif S1 semester 6 yang ingin belajar Next.js.",
+      })
+      expect(result).toBe("intern")
+    })
+
+    it("24. Mengutamakan 'intern' untuk mahasiswa aktif D3 semester akhir", () => {
+      const result = getJobEduCategory({
+        title: "Internship Mobile Developer",
+        description: "Dicari mahasiswa aktif D3 semester akhir jurusan Teknik Informatika.",
+      })
+      expect(result).toBe("intern")
+    })
   })
 })
 
