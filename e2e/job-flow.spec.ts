@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("MagangYokk Critical User Journey", () => {
-  test("1. Beranda & Header: memuat halaman utama dan identitas MagangYokk", async ({
+  test("1. Beranda & Header: memuat halaman utama dan identitas MagangYokk (Tamu Publik)", async ({
     page,
   }) => {
     await page.goto("/");
@@ -13,6 +13,10 @@ test.describe("MagangYokk Critical User Journey", () => {
     const brandHeading = page.getByRole("heading", { name: "MagangYokk", level: 1 });
     await expect(brandHeading).toBeVisible();
 
+    // Verifikasi Tombol Masuk di header kanan
+    const masukBtn = page.getByRole("button", { name: /Masuk/i });
+    await expect(masukBtn).toBeVisible();
+
     // Verifikasi Feedback Link di footer
     const feedbackLink = page.getByRole("link", {
       name: /Kritik & Saran \/ Lapor Bug/i,
@@ -21,7 +25,7 @@ test.describe("MagangYokk Critical User Journey", () => {
     await expect(feedbackLink).toHaveAttribute("target", "_blank");
   });
 
-  test("2. Interaksi Pencarian Lowongan: filter posisi atau perusahaan", async ({
+  test("2. Interaksi Pencarian & Filter Lowongan: filter posisi atau perusahaan dan tech stack", async ({
     page,
   }) => {
     await page.goto("/");
@@ -39,87 +43,110 @@ test.describe("MagangYokk Critical User Journey", () => {
     // Kosongkan kembali filter
     await searchInput.fill("");
     await expect(searchInput).toHaveValue("");
+
+    // Klik tombol filter tag teknologi
+    const nextBtn = page.getByRole("button", { name: "Next.js", exact: true });
+    await expect(nextBtn).toBeVisible();
+    await nextBtn.click();
+
+    // Verifikasi tombol tag berstatus aktif dan tombol reset stack muncul
+    await expect(nextBtn).toHaveClass(/bg-white/);
+    const resetStackBtn = page.getByRole("button", { name: /Reset Stack/i });
+    await expect(resetStackBtn).toBeVisible();
+
+    // Reset kembali stack filter
+    await resetStackBtn.click();
+    await expect(resetStackBtn).not.toBeVisible();
   });
 
-  test("3. Pembukaan Drafter Cover Letter: membuka modal bottom-sheet", async ({
+  test("3. Action Barrier & Pembukaan Dialog Auth (Deterministik)", async ({
     page,
   }) => {
     await page.goto("/");
 
-    const coverLetterBtn = page
-      .getByRole("button", { name: /Cover Letter/i })
-      .first();
+    // 1. Buka modal auth via tombol header "Masuk"
+    const masukBtn = page.getByRole("button", { name: /Masuk/i });
+    await expect(masukBtn).toBeVisible();
+    await masukBtn.click();
 
-    // Jika lowongan ada di database feed
-    if (await coverLetterBtn.isVisible()) {
-      await coverLetterBtn.click();
+    // Heading modal auth wajib tampil deterministik
+    const authHeading = page.getByRole("heading", { name: "Masuk ke MagangYokk" });
+    await expect(authHeading).toBeVisible();
 
-      // Heading modal harus tampil
-      const modalHeading = page.getByRole("heading", {
-        name: "Cover Letter Drafter",
-      });
-      await expect(modalHeading).toBeVisible();
+    // Input email dan tombol Google OAuth wajib tampil
+    const emailInput = page.locator('input[type="email"]');
+    await expect(emailInput).toBeVisible();
 
-      // Tombol switcher bahasa harus tampil
-      await expect(
-        page.getByRole("button", { name: "Bahasa Indonesia" })
-      ).toBeVisible();
-      await expect(
-        page.getByRole("button", { name: "English" })
-      ).toBeVisible();
+    const googleBtn = page.getByRole("button", { name: /Lanjutkan dengan Google/i });
+    await expect(googleBtn).toBeVisible();
 
-      // Tutup modal
-      const closeBtn = page.getByLabel("Tutup modal cover letter");
-      await closeBtn.click();
-      await expect(modalHeading).not.toBeVisible();
-    } else {
-      // Jika feed kosong saat pengujian, pastikan search container tetap tampil normal
-      const searchInput = page.getByPlaceholder(
-        "Filter posisi atau perusahaan..."
-      );
-      await expect(searchInput).toBeVisible();
-    }
+    // Tutup dialog modal
+    const closeBtn = page.getByRole("button", { name: "Tutup dialog" });
+    await closeBtn.click();
+    await expect(authHeading).not.toBeVisible();
+
+    // 2. Uji Action Barrier Cover Letter: klik Cover Letter sebagai tamu memicu Auth Modal
+    const coverLetterBtn = page.getByRole("button", { name: /Cover Letter/i }).first();
+    await expect(coverLetterBtn).toBeVisible();
+    await coverLetterBtn.click();
+
+    await expect(authHeading).toBeVisible();
+    await expect(
+      page.getByText("Masuk terlebih dahulu untuk membuat cover letter otomatis via AI.")
+    ).toBeVisible();
+
+    // Tutup modal
+    await closeBtn.click();
+    await expect(authHeading).not.toBeVisible();
+
+    // 3. Uji Action Barrier CV Sync: klik CV sebagai tamu memicu Auth Modal
+    const cvBtn = page.getByRole("button", { name: "CV", exact: true });
+    await expect(cvBtn).toBeVisible();
+    await cvBtn.click();
+
+    await expect(authHeading).toBeVisible();
+    await expect(
+      page.getByText("Masuk terlebih dahulu untuk mengunggah resume.")
+    ).toBeVisible();
+
+    // Tutup kembali dialog modal
+    await closeBtn.click();
+    await expect(authHeading).not.toBeVisible();
   });
 
-  test("4. Siklus Hidup Pelacakan: mutasi status dari Feed dan verifikasi di Kanban Board", async ({
+  test("4. Transisi Antarmuka: beralih antara Feed dan Kanban Board secara deterministik", async ({
     page,
   }) => {
     await page.goto("/");
 
-    const statusSelect = page
-      .locator('select[aria-label="Pilih status lamaran"]')
-      .first();
+    // Beralih ke tampilan Kanban Board
+    const boardBtn = page.getByRole("button", { name: "Board" });
+    await expect(boardBtn).toBeVisible();
+    await boardBtn.click();
 
-    if (await statusSelect.isVisible()) {
-      // Mutasikan status lowongan pertama ke "saved" (Disimpan)
-      await statusSelect.selectOption("saved");
-      await expect(statusSelect).toHaveValue("saved");
+    // Verifikasi bahwa seluruh 5 kolom Kanban tampil
+    const savedHeading = page.getByRole("heading", { name: "Disimpan" });
+    await expect(savedHeading).toBeVisible();
 
-      // Beralih ke tampilan Kanban Board
-      const boardBtn = page.getByRole("button", { name: "Board" });
-      await expect(boardBtn).toBeVisible();
-      await boardBtn.click();
+    const appliedHeading = page.getByRole("heading", { name: "Sudah Dilamar" });
+    await expect(appliedHeading).toBeVisible();
 
-      // Verifikasi bahwa kolom "Disimpan" tampil dan aktif di Kanban
-      const savedHeading = page.getByRole("heading", { name: "Disimpan" });
-      await expect(savedHeading).toBeVisible();
+    const interviewHeading = page.getByRole("heading", { name: "Interview" });
+    await expect(interviewHeading).toBeVisible();
 
-      // Beralih kembali ke tampilan Feed
-      const feedBtn = page.getByRole("button", { name: "Feed" });
-      await expect(feedBtn).toBeVisible();
-      await feedBtn.click();
+    const offeredHeading = page.getByRole("heading", { name: "Penawaran" });
+    await expect(offeredHeading).toBeVisible();
 
-      // Pastikan status select masih mempertahankan nilai "saved"
-      await expect(statusSelect).toHaveValue("saved");
-    } else {
-      // Fallback jika feed kosong: uji tombol toggle Board tetap dapat diakses
-      const boardBtn = page.getByRole("button", { name: "Board" });
-      if (await boardBtn.isVisible()) {
-        await boardBtn.click();
-        const feedBtn = page.getByRole("button", { name: "Feed" });
-        await expect(feedBtn).toBeVisible();
-        await feedBtn.click();
-      }
-    }
+    const rejectedHeading = page.getByRole("heading", { name: "Ditolak" });
+    await expect(rejectedHeading).toBeVisible();
+
+    // Beralih kembali ke tampilan Feed
+    const feedBtn = page.getByRole("button", { name: "Feed" });
+    await expect(feedBtn).toBeVisible();
+    await feedBtn.click();
+
+    // Pastikan kartu-kartu loker di Feed terlihat kembali
+    const firstCoverLetterBtn = page.getByRole("button", { name: /Cover Letter/i }).first();
+    await expect(firstCoverLetterBtn).toBeVisible();
   });
 });

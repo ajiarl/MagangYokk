@@ -26,20 +26,24 @@ export function JobCard({
   onOpenGap,
   onOpenNotes
 }: JobCardProps) {
-  const [currentStatus, setCurrentStatus] = useState<ApplicationStatus | null>(initialStatus || null)
+  const [overrideStatus, setOverrideStatus] = useState<ApplicationStatus | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  const currentStatus = overrideStatus ?? initialStatus ?? null
   const score = job.score ? Number(job.score).toFixed(1) : null
   const hasNotes = Boolean(initialNotes || job.applicationNotes)
 
   async function handleStatusChange(newStatus: ApplicationStatus) {
-    setCurrentStatus(newStatus)
     if (onStatusChange) {
       onStatusChange(newStatus)
     } else {
+      setOverrideStatus(newStatus)
       startTransition(async () => {
         const res = await updateJobStatus(job.id, newStatus)
-        if (!res.success) toast.error("Gagal update status: " + res.error)
+        if (!res.success) {
+          toast.error("Gagal update status: " + res.error)
+          setOverrideStatus(null)
+        }
       })
     }
   }

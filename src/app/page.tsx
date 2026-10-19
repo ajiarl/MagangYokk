@@ -3,17 +3,14 @@ import { MessageSquarePlus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobFeedClient } from "@/components/job-feed-client"
-import { formatRelativeTime } from "@/lib/job-utils"
+import { AppHeader } from "@/components/app-header"
 export const revalidate = 300
 
-type RawJobRecord = Job & {
-  applications?: Array<{ status: ApplicationStatus; notes: string | null }> | null
-}
 
-async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]> {
+async function getPublicJobs(): Promise<(Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]> {
   const { data: jobs, error: jobsError } = await supabase
     .from("jobs")
-    .select("*, applications(status, notes)")
+    .select("*")
     .order("score", { ascending: false, nullsFirst: false })
     .order("scraped_at", { ascending: false })
     .limit(100)
@@ -31,28 +28,11 @@ async function getJobsWithApplications(): Promise<(Job & { applicationStatus?: A
     )
   }
 
-  const rawJobs = (jobs || []) as RawJobRecord[]
-
-  return rawJobs.map((job) => {
-    const { applications, ...jobData } = job
-    const userApp = Array.isArray(applications) ? applications[0] : null
-    return {
-      ...jobData,
-      applicationStatus: userApp?.status || null,
-      applicationNotes: userApp?.notes || null
-    }
-  })
-}
-
-async function getProfile() {
-  const { data } = await supabase
-    .from("profiles")
-    .select("full_name, skills, score_threshold")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
-  return data
+  return (jobs || []).map((job) => ({
+    ...job,
+    applicationStatus: null,
+    applicationNotes: null,
+  }))
 }
 
 function toSafeIsoDate(dateStr: string | null | undefined, fallbackDate: Date = new Date()): string {
@@ -62,10 +42,7 @@ function toSafeIsoDate(dateStr: string | null | undefined, fallbackDate: Date = 
 }
 
 export default async function Home() {
-  const [jobsWithApps, profile] = await Promise.all([
-    getJobsWithApplications(),
-    getProfile()
-  ])
+  const jobsWithApps = await getPublicJobs()
 
   const latestScrapedAt = jobsWithApps.reduce<string | null>((latest, job) => {
     if (!job.scraped_at) return latest
@@ -124,37 +101,11 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#08090a] text-[#f7f8f8] antialiased selection:bg-[#5e6ad2]/30 selection:text-white">
-      {/* Header Sticky Linear Style - Full Width Fluid Canvas */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#08090a]/90 backdrop-blur-md">
-        <div className="w-full px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="font-semibold text-[13px] tracking-tight text-[#f7f8f8]">MagangYokk</h1>
-            <span className="text-[11px] font-mono text-[#8a8f98]">/</span>
-            <span className="text-xs text-[#8a8f98] font-mono">{jobsWithApps.length} opportunities</span>
-            {latestScrapedAt && (
-              <>
-                <span className="hidden sm:inline text-[11px] font-mono text-[#8a8f98]">/</span>
-                <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-[#8a8f98]">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                  </span>
-                  <span suppressHydrationWarning>Sinkronisasi: {formatRelativeTime(latestScrapedAt)}</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {profile && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-[#8a8f98] font-mono">{profile.full_name}</span>
-              <div className="w-6 h-6 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[10px] font-mono text-[#d0d6e0]">
-                A
-              </div>
-            </div>
-          )}
-        </div>
-      </header>
+      {/* Header Sticky Linear Style - Client Authenticated & Guest Responsive */}
+      <AppHeader
+        totalJobs={jobsWithApps.length}
+        latestScrapedAt={latestScrapedAt}
+      />
 
       {/* Main Container - Edge-to-Edge Workspace */}
       <main className="w-full px-6 py-5">

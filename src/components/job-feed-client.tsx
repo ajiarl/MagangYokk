@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useMemo } from "react"
 import { Job, ApplicationStatus } from "@/lib/types"
 import { JobCard } from "@/components/job-card"
 import { KanbanBoard } from "@/components/kanban-board"
@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { updateJobStatus } from "@/app/actions"
 import { toast } from "sonner"
+import { useAuth } from "@/components/auth-context"
 
 interface JobFeedClientProps {
   initialJobs: (Job & { applicationStatus?: ApplicationStatus | null; applicationNotes?: string | null })[]
@@ -41,7 +42,17 @@ export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientPro
   const [activeGapJob, setActiveGapJob] = useState<Job | null>(null)
   const [activeNotesJob, setActiveNotesJob] = useState<(Job & { applicationNotes?: string | null }) | null>(null)
 
-  const [jobs, setJobs] = useState(initialJobs)
+  const { user, applications, openAuthModal, setLocalApplication } = useAuth()
+  const jobs = useMemo(() => {
+    return initialJobs.map((j) => {
+      const userApp = applications[j.id]
+      return {
+        ...j,
+        applicationStatus: userApp ? userApp.status : j.applicationStatus ?? null,
+        applicationNotes: userApp ? userApp.notes : j.applicationNotes ?? null,
+      }
+    })
+  }, [initialJobs, applications])
   const [, startTransition] = useTransition()
 
   function handleTechToggle(tech: string) {
@@ -51,33 +62,65 @@ export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientPro
   }
 
   function handleStatusChange(jobId: string, newStatus: ApplicationStatus) {
-    const previousStatus = jobs.find((j) => j.id === jobId)?.applicationStatus
+    if (!user) {
+      openAuthModal("Masuk terlebih dahulu untuk menyimpan status lamaran.")
+      return
+    }
 
-    setJobs((prev) =>
-      prev.map((j) =>
-        j.id === jobId ? { ...j, applicationStatus: newStatus } : j
-      )
-    )
+    const previousStatus = applications[jobId]?.status ?? null
+    setLocalApplication(jobId, newStatus)
 
     startTransition(async () => {
       const res = await updateJobStatus(jobId, newStatus)
       if (!res.success) {
         toast.error("Gagal update status: " + res.error)
-        setJobs((prev) =>
-          prev.map((j) =>
-            j.id === jobId ? { ...j, applicationStatus: previousStatus } : j
-          )
-        )
+        if (previousStatus) {
+          setLocalApplication(jobId, previousStatus)
+        }
       }
     })
   }
 
   function handleNotesChange(jobId: string, newNotes: string) {
-    setJobs((prev) =>
-      prev.map((j) =>
-        j.id === jobId ? { ...j, applicationNotes: newNotes } : j
-      )
-    )
+    if (!user) {
+      openAuthModal("Masuk terlebih dahulu untuk menambahkan catatan lamaran.")
+      return
+    }
+
+    const currentStatus = applications[jobId]?.status ?? "saved"
+    setLocalApplication(jobId, currentStatus, newNotes)
+  }
+
+  function handleOpenCoverLetter(job: Job) {
+    if (!user) {
+      openAuthModal("Masuk terlebih dahulu untuk membuat cover letter otomatis via AI.")
+      return
+    }
+    setCoverLetterJob(job)
+  }
+
+  function handleOpenGap(job: Job) {
+    if (!user) {
+      openAuthModal("Masuk terlebih dahulu untuk menganalisis kecocokan resume.")
+      return
+    }
+    setActiveGapJob(job)
+  }
+
+  function handleOpenNotes(job: Job & { applicationNotes?: string | null }) {
+    if (!user) {
+      openAuthModal("Masuk terlebih dahulu untuk menambahkan catatan lamaran.")
+      return
+    }
+    setActiveNotesJob(job)
+  }
+
+  function handleOpenResumeUpload() {
+    if (!user) {
+      openAuthModal("Masuk terlebih dahulu untuk mengunggah resume.")
+      return
+    }
+    setIsResumeModalOpen(true)
   }
 
   // Hitung counter untuk kategori pendidikan
@@ -223,7 +266,7 @@ export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientPro
           {/* CV Sync */}
           <button
             type="button"
-            onClick={() => setIsResumeModalOpen(true)}
+            onClick={handleOpenResumeUpload}
             className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-lg border border-white/[0.08] hover:border-white/[0.2] bg-white/[0.02] hover:bg-white/[0.06] text-[#d0d6e0] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5e6ad2] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090a]"
           >
             <Upload className="w-3 h-3 text-[#8a8f98]" />
@@ -323,9 +366,9 @@ export function JobFeedClient({ initialJobs, latestScrapedAt }: JobFeedClientPro
                   initialStatus={job.applicationStatus}
                   initialNotes={job.applicationNotes}
                   onStatusChange={(status) => handleStatusChange(job.id, status)}
-                  onOpenCoverLetter={setCoverLetterJob}
-                  onOpenGap={(j) => setActiveGapJob(j)}
-                  onOpenNotes={(j) => setActiveNotesJob(j)}
+                  onOpenCoverLetter={handleOpenCoverLetter}
+                  onOpenGap={handleOpenGap}
+                  onOpenNotes={handleOpenNotes}
                 />
               ))}
             </div>

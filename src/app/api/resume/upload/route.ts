@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/server"
 import { recordAuditLog } from "@/lib/audit-trail"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 // @ts-expect-error pdf-parse-fork lacks bundled type definitions
@@ -7,6 +7,14 @@ import pdfParse from "pdf-parse-fork"
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Silakan masuk terlebih dahulu untuk mengunggah resume." },
+        { status: 401 }
+      )
+    }
     const clientIp = getClientIp(req)
     const rateLimit = checkRateLimit(`resume-upload:${clientIp}`, {
       limit: 3,
@@ -74,34 +82,66 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
-    // Ambil profile Aji
-    const { data: profile } = await supabase
+    // Ambil profile berdasarkan user_id
+    let { data: profile } = await supabase
       .from("profiles")
       .select("id")
-      .order("created_at", { ascending: true })
-      .limit(1)
+      .eq("user_id", user.id)
       .maybeSingle()
-    if (profile) {
-      // Simpan bio / resume_raw_text ke Supabase
-      await supabase
-        .from("profiles")
-        .update({
-          bio: rawText.slice(0, 5000),
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", profile.id)
 
-      await recordAuditLog({
-        actionType: "RESUME_UPLOAD",
-        entityId: profile.id,
-        payloadSummary: {
-          fileName: file.name,
-          fileSize: file.size,
-          textLength: rawText.length,
-        },
-        rawIp: clientIp,
-      })
+    if (!profile) {
+      const defaultName =
+        (user.user_metadata?.full_name as string) ||
+        user.email?.split("@")[0] ||
+        "Kandidat Magang"
+      const { data: newProfile, error: createError } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: user.id,
+          full_name: defaultName,
+          skills: [],
+          score_threshold: 6.5,
+        })
+        .select("id")
+        .single()
+
+      if (createError || !newProfile) {
+        console.error("Gagal auto-create profile saat upload resume:", createError)
+        return NextResponse.json(
+          { error: "Gagal menginisialisasi profil pengguna." },
+          { status: 500 }
+        )
+      }
+      profile = newProfile
     }
+
+    // Simpan bio / resume_raw_text ke Supabase dengan explicit error check
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({
+        bio: rawText.slice(0, 5000),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", profile.id)
+
+    if (dbError) {
+      console.error("Gagal menyimpan resume ke profil database:", dbError)
+      return NextResponse.json(
+        { error: `Gagal menyimpan resume ke database: ${dbError.message}` },
+        { status: 500 }
+      )
+    }
+
+    await recordAuditLog({
+      actionType: "RESUME_UPLOAD",
+      entityId: profile.id,
+      payloadSummary: {
+        fileName: file.name,
+        fileSize: file.size,
+        textLength: rawText.length,
+      },
+      rawIp: clientIp,
+    })
 
     return NextResponse.json({
       success: true,

@@ -8,23 +8,30 @@ const {
   mockHeadersGet,
   mockRevalidatePath,
   mockRecordAuditLog,
+  mockGetUser,
   mockProfilesMaybeSingle,
   mockApplicationsUpsert,
   mockFrom,
+  mockCreateClient,
 } = vi.hoisted(() => {
   const headersGet = vi.fn()
   const revalidatePath = vi.fn()
   const recordAuditLog = vi.fn().mockResolvedValue(undefined)
 
+  const getUser = vi.fn()
   const maybeSingle = vi.fn()
-  const limit = vi.fn(() => ({ maybeSingle }))
-  const order = vi.fn(() => ({ limit }))
-  const select = vi.fn(() => ({ order }))
+  const eq = vi.fn(() => ({ maybeSingle }))
+  const select = vi.fn(() => ({ eq }))
+
+  const insertSingle = vi.fn()
+  const insertSelect = vi.fn(() => ({ single: insertSingle }))
+  const insert = vi.fn(() => ({ select: insertSelect }))
+
   const upsert = vi.fn()
 
   const from = vi.fn((table: string) => {
     if (table === "profiles") {
-      return { select }
+      return { select, insert }
     }
     if (table === "applications") {
       return { upsert }
@@ -32,19 +39,33 @@ const {
     return {}
   })
 
+  const createClient = vi.fn(async () => ({
+    auth: {
+      getUser,
+    },
+    from,
+  }))
+
   return {
     mockHeadersGet: headersGet,
     mockRevalidatePath: revalidatePath,
     mockRecordAuditLog: recordAuditLog,
+    mockGetUser: getUser,
     mockProfilesMaybeSingle: maybeSingle,
     mockApplicationsUpsert: upsert,
     mockFrom: from,
+    mockCreateClient: createClient,
   }
 })
 
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => ({
     get: mockHeadersGet,
+  })),
+  cookies: vi.fn(async () => ({
+    get: vi.fn(() => undefined),
+    getAll: vi.fn(() => []),
+    set: vi.fn(),
   })),
 }))
 
@@ -56,37 +77,42 @@ vi.mock("@/lib/audit-trail", () => ({
   recordAuditLog: mockRecordAuditLog,
 }))
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: mockFrom,
-  },
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: mockCreateClient,
 }))
 
-describe("Server Action: updateJobStatus Integration Tests", () => {
-  const originalEnv = process.env
+describe("Server Action: updateJobStatus Integration Tests (Multi-User SSR)", () => {
+  const mockUser = {
+    id: "user-uuid-999",
+    email: "mahasiswa@kampus.ac.id",
+    user_metadata: { full_name: "Mahasiswa IT" },
+  }
+
+  const mockProfile = {
+    id: "profile-uuid-123",
+    full_name: "Mahasiswa IT",
+    skills: ["React", "TypeScript"],
+    bio: null,
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env = { ...originalEnv }
-    delete process.env.INTERNAL_ACTION_SECRET
 
-    // Default authorized headers (origin matches host)
+    // Default headers
     mockHeadersGet.mockImplementation((key: string) => {
-      switch (key.toLowerCase()) {
-        case "host":
-          return "localhost:3000"
-        case "origin":
-          return "http://localhost:3000"
-        case "x-forwarded-for":
-          return "203.0.113.195, 10.0.0.1"
-        default:
-          return null
-      }
+      if (key.toLowerCase() === "x-forwarded-for") return "203.0.113.195, 10.0.0.1"
+      return null
     })
 
-    // Default authenticated profile
+    // Default authenticated user
+    mockGetUser.mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    })
+
+    // Default existing profile
     mockProfilesMaybeSingle.mockResolvedValue({
-      data: { id: "profile-aji-uuid-123" },
+      data: mockProfile,
       error: null,
     })
 
@@ -105,7 +131,7 @@ describe("Server Action: updateJobStatus Integration Tests", () => {
     expect(mockApplicationsUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         job_id: "job-uuid-101",
-        profile_id: "profile-aji-uuid-123",
+        profile_id: "profile-uuid-123",
         status: "saved",
         updated_at: expect.any(String),
       }),
@@ -135,7 +161,7 @@ describe("Server Action: updateJobStatus Integration Tests", () => {
     expect(mockApplicationsUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         job_id: "job-uuid-202",
-        profile_id: "profile-aji-uuid-123",
+        profile_id: "profile-uuid-123",
         status: "applied",
         applied_at: expect.any(String),
         updated_at: expect.any(String),
@@ -159,10 +185,8 @@ describe("Server Action: updateJobStatus Integration Tests", () => {
 
     for (const status of additionalStatuses) {
       vi.clearAllMocks()
-      mockProfilesMaybeSingle.mockResolvedValue({
-        data: { id: "profile-aji-uuid-123" },
-        error: null,
-      })
+      mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null })
+      mockProfilesMaybeSingle.mockResolvedValue({ data: mockProfile, error: null })
       mockApplicationsUpsert.mockResolvedValue({ error: null })
 
       const result = await updateJobStatus(`job-uuid-${status}`, status)
@@ -177,47 +201,20 @@ describe("Server Action: updateJobStatus Integration Tests", () => {
     }
   })
 
-  it("Case 4 (Negative - Unauthorized Request): permintaan ditolak jika origin tidak cocok dengan host", async () => {
-    mockHeadersGet.mockImplementation((key: string) => {
-      switch (key.toLowerCase()) {
-        case "host":
-          return "localhost:3000"
-        case "origin":
-          return "https://malicious-attacker.com"
-        default:
-          return null
-      }
+  it("Case 4 (Negative - Unauthenticated Request): permintaan ditolak jika user belum login", async () => {
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: new Error("JWT expired"),
     })
 
     const result = await updateJobStatus("job-uuid-1", "saved")
 
     expect(result).toEqual({
       success: false,
-      error: "Akses ditolak atau input tidak valid.",
+      error: "Silakan masuk terlebih dahulu untuk mengelola lamaran.",
     })
-    expect(mockFrom).not.toHaveBeenCalled()
     expect(mockApplicationsUpsert).not.toHaveBeenCalled()
     expect(mockRecordAuditLog).not.toHaveBeenCalled()
-  })
-
-  it("Case 4b (Authorization via Internal Secret): request dengan origin berbeda diizinkan jika header x-action-secret valid", async () => {
-    process.env.INTERNAL_ACTION_SECRET = "super-secret-token-123"
-    mockHeadersGet.mockImplementation((key: string) => {
-      switch (key.toLowerCase()) {
-        case "x-action-secret":
-          return "super-secret-token-123"
-        case "host":
-          return "localhost:3000"
-        case "origin":
-          return "https://external-service.local"
-        default:
-          return null
-      }
-    })
-
-    const result = await updateJobStatus("job-uuid-internal", "saved")
-    expect(result).toEqual({ success: true })
-    expect(mockApplicationsUpsert).toHaveBeenCalled()
   })
 
   it("Case 5 (Negative - Invalid Status Outside Enum): menolak status yang tidak terdaftar dalam ALLOWED_STATUSES", async () => {
@@ -226,7 +223,7 @@ describe("Server Action: updateJobStatus Integration Tests", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "Akses ditolak atau input tidak valid.",
+      error: "Status lamaran tidak valid.",
     })
     expect(mockApplicationsUpsert).not.toHaveBeenCalled()
   })
@@ -235,41 +232,26 @@ describe("Server Action: updateJobStatus Integration Tests", () => {
     const emptyResult = await updateJobStatus("", "saved")
     expect(emptyResult).toEqual({
       success: false,
-      error: "Akses ditolak atau input tidak valid.",
+      error: "ID lowongan tidak valid.",
     })
 
     const whitespaceResult = await updateJobStatus("   ", "saved")
     expect(whitespaceResult).toEqual({
       success: false,
-      error: "Akses ditolak atau input tidak valid.",
+      error: "ID lowongan tidak valid.",
     })
 
     const tooLongJobId = "a".repeat(129)
     const longResult = await updateJobStatus(tooLongJobId, "saved")
     expect(longResult).toEqual({
       success: false,
-      error: "Akses ditolak atau input tidak valid.",
+      error: "ID lowongan tidak valid.",
     })
 
     expect(mockApplicationsUpsert).not.toHaveBeenCalled()
   })
 
-  it("Case 7 (Negative - Missing Profile): mengembalikan error ramah jika profil default tidak ditemukan", async () => {
-    mockProfilesMaybeSingle.mockResolvedValueOnce({
-      data: null,
-      error: null,
-    })
-
-    const result = await updateJobStatus("job-uuid-1", "saved")
-
-    expect(result).toEqual({
-      success: false,
-      error: "Profil tidak ditemukan.",
-    })
-    expect(mockApplicationsUpsert).not.toHaveBeenCalled()
-  })
-
-  it("Case 8 (Negative - Database Upsert Error): menangani kegagalan PostgREST secara graceful", async () => {
+  it("Case 7 (Negative - Database Upsert Error): menangani kegagalan PostgREST secara graceful", async () => {
     mockApplicationsUpsert.mockResolvedValueOnce({
       error: { message: "Database connection closed unexpectedly" },
     })
@@ -284,7 +266,7 @@ describe("Server Action: updateJobStatus Integration Tests", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled()
   })
 
-  it("Case 9 (Negative - Unexpected Exception): menangkap exception tak terduga dan mengembalikan typed error", async () => {
+  it("Case 8 (Negative - Unexpected Exception): menangkap exception tak terduga dan mengembalikan typed error", async () => {
     mockApplicationsUpsert.mockRejectedValueOnce(
       new Error("Fatal network driver failure")
     )

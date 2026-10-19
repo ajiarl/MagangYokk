@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/server"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Silakan masuk terlebih dahulu untuk membuat cover letter." },
+        { status: 401 }
+      )
+    }
+
     const clientIp = getClientIp(req)
     const rateLimit = checkRateLimit(`cover-letter:${clientIp}`, {
       limit: 5,
@@ -67,19 +76,37 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 2. Ambil Profil Pelamar (Phase 1: 1 baris hardcoded Aji)
-    const { data: profile, error: profileError } = await supabase
+    // 2. Ambil Profil Pelamar berdasarkan user_id
+    let { data: profile } = await supabase
       .from("profiles")
       .select("*")
-      .order("created_at", { ascending: true })
-      .limit(1)
+      .eq("user_id", user.id)
       .maybeSingle()
 
-    if (profileError || !profile) {
-      return NextResponse.json(
-        { error: "Profil pelamar tidak ditemukan di database." },
-        { status: 404 }
-      )
+    if (!profile) {
+      const defaultName =
+        (user.user_metadata?.full_name as string) ||
+        user.email?.split("@")[0] ||
+        "Kandidat Magang"
+      const { data: newProfile, error: createError } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: user.id,
+          full_name: defaultName,
+          skills: [],
+          score_threshold: 6.5,
+        })
+        .select("*")
+        .single()
+
+      if (createError || !newProfile) {
+        console.error("Gagal auto-create profile:", createError)
+        return NextResponse.json(
+          { error: "Profil pelamar tidak ditemukan di database." },
+          { status: 404 }
+        )
+      }
+      profile = newProfile
     }
 
     // 2b. Ambil status aplikasi eksisting (jika sudah pernah apply/melamar)
@@ -179,8 +206,8 @@ INSTRUKSI:
     const groqData = await groqRes.json()
     const draft = groqData.choices?.[0]?.message?.content || ""
 
-    // 5. Upsert draft ke tabel applications di Supabase
-    await supabase.from("applications").upsert(
+    // 5. Upsert draft ke tabel applications di Supabase dengan pengecekan dbError eksplisit
+    const { error: dbError } = await supabase.from("applications").upsert(
       {
         job_id: job.id,
         profile_id: profile.id,
@@ -191,6 +218,14 @@ INSTRUKSI:
       },
       { onConflict: "job_id,profile_id" }
     )
+
+    if (dbError) {
+      console.error("Gagal menyimpan cover letter ke database:", dbError)
+      return NextResponse.json(
+        { error: `Gagal menyimpan cover letter ke database: ${dbError.message}` },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,

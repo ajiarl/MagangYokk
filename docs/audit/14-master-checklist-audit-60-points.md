@@ -76,8 +76,8 @@ Setelah penuntasan seluruh fase hardening teknis dan verifikasi reproduktifitas:
 | 13 | Kode modular dan mudah dipelihara | P1 | ✅ PASSED | De-bloating god component selesai: `job-utils.ts`, `audit-trail.ts`, dan modal modular. |
 | 14 | Database memiliki constraints yang tepat | P0 | ✅ PASSED | Primary Key UUID, `jobs.url` unique constraint, FK NO ACTION, enum status. |
 | 15 | Migrasi database dapat dijalankan | P0 | ✅ PASSED | `docs/magangyokk-schema.sql` bersih tanpa syntax error, tabel `audit_logs` ditambahkan. |
-| 16 | Authentication diuji | P0 | ✅ PASSED | Session guard, origin header check, dan x-action-secret melindungi Server Actions. |
-| 17 | Authorization diuji di server | P0 | ✅ PASSED | Otorisasi server-side aktif pada mutasi status lamaran dan catatan. |
+| 16 | Authentication diuji | P0 | ✅ PASSED | Multi-User Supabase Auth (@supabase/ssr) aktif; session cookies via middleware & getUser() wajib untuk mutasi data. |
+| 17 | Authorization diuji di server | P0 | ✅ PASSED | Server Actions & Route Handlers mengecek auth.getUser(); mutasi terisolasi per auth.uid() tanpa bypass service_role profil pertama. |
 | 18 | Password disimpan dengan hashing aman | P0 | ⚪ NOT APPLICABLE | Tidak ada sistem akun/password lokal (Phase 1 solo-user). |
 | 19 | Website menggunakan HTTPS | P0 | ✅ PASSED | Enforced HTTPS di Vercel deployment dan Supabase REST gateway port 443. |
 | 20 | Input dan output ditangani secara aman | P0 | ✅ PASSED | React auto-escaping kebal reflected XSS, PostgREST kebal direct SQLi. |
@@ -107,7 +107,7 @@ Setelah penuntasan seluruh fase hardening teknis dan verifikasi reproduktifitas:
 | 44 | Deployment memiliki prosedur rollback | P1 | ✅ PASSED | Vercel Instant Rollback 1-klik dan immutable deployment history aktif. |
 | 45 | CI/CD menerapkan pemeriksaan kualitas | P1 | ✅ PASSED | GitHub Actions `.github/workflows/ci.yml` menjalankan linting, typecheck, dan unit tests otomatis. |
 | 46 | Dokumen privasi sesuai kebutuhan hukum | P0 | ✅ PASSED | Rute `/privacy` dan `/terms` aktif, checkbox persetujuan UU PDP No. 27/2022 terpasang. |
-| 47 | Akses ke data dibatasi berdasarkan peran | P0 | ✅ PASSED | Server Actions terlindungi guard otorisasi request. |
+| 47 | Akses ke data dibatasi berdasarkan peran | P0 | ✅ PASSED | Multi-User Auth aktif; isolasi profil dan lamaran terikat ke auth.uid() pengguna yang sedang login. |
 | 48 | Biaya operasional diperkirakan | P0 | ✅ PASSED | TCO terverifikasi Rp 0/bln (Vercel Hobby, Supabase Free Tier, Groq Free Tier). |
 | 49 | Analytics sesuai kebutuhan dan privasi | P1 | ✅ PASSED | `@vercel/analytics/react` terintegrasi di root layout: zero PII, cookieless, UU PDP compliant. |
 | 50 | Rencana maintenance tersedia | P1 | ✅ PASSED | `docs/MAINTENANCE.md` mendokumentasikan panduan operasional berkala. |
