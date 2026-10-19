@@ -117,7 +117,7 @@ Analisis kesesuaian profil dan keluarkan JSON valid sekarang:`
         Authorization: `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "qwen/qwen3.8-27b",
         temperature: 0.2,
         response_format: { type: "json_object" },
         messages: [
